@@ -1,0 +1,30 @@
+{
+  "name": "noris-airlines",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "vercel-build": "prisma generate && next build"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.0",
+    "next": "^14.1.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "qrcode": "^1.5.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "prisma": "^5.10.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}

@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Airport {
+  id        Int       @id @default(autoincrement())
+  iata      String    @unique
+  name      String
+  city      String
+  country   String
+  flightsFrom Flight[] @relation("FlightFrom")
+  flightsTo   Flight[] @relation("FlightTo")
+}
+
+model Aircraft {
+  id        Int       @id @default(autoincrement())
+  type      String
+  model     String
+  totalRows Int
+  seatConfig Json
+  flights   Flight[]
+}
+
+model Flight {
+  id            Int            @id @default(autoincrement())
+  flightNumber  String         @unique
+  fromAirportId Int
+  toAirportId   Int
+  fromAirport   Airport        @relation("FlightFrom", fields: [fromAirportId], references: [id])
+  toAirport     Airport        @relation("FlightTo", fields: [toAirportId], references: [id])
+  aircraftId    Int
+  aircraft      Aircraft       @relation(fields: [aircraftId], references: [id])
+  departureTime DateTime
+  arrivalTime   DateTime
+  durationMin   Int
+  startDate     DateTime
+  endDate       DateTime
+  daysOfWeek    String
+  tariffs       FlightTariff[]
+  bookings      Booking[]
+}
+
+model FlightTariff {
+  id          Int         @id @default(autoincrement())
+  flightId    Int
+  flight      Flight      @relation(fields: [flightId], references: [id])
+  name        String
+  description String
+  price       Float
+  baggage     String
+  handLuggage String
+  seatDiscount Float     @default(0)
+  freeSeatRows String    @default("")
+  refundable  Boolean    @default(false)
+  class       String
+  bookings    Booking[]
+}
+
+model Meal {
+  id          Int            @id @default(autoincrement())
+  name        String
+  description String
+  price       Float
+  bookingMeals BookingMeal[]
+}
+
+model Passenger {
+  id          Int               @id @default(autoincrement())
+  firstName   String
+  lastName    String
+  middleName  String?
+  birthDate   DateTime
+  gender      String
+  email       String
+  phone       String
+  passengerType String
+  bookingPassengers BookingPassenger[]
+}
+
+model Booking {
+  id            Int            @id @default(autoincrement())
+  bookingCode  String         @unique
+  flightId     Int
+  flight       Flight         @relation(fields: [flightId], references: [id])
+  tariffId     Int
+  tariff       FlightTariff   @relation(fields: [tariffId], references: [id])
+  totalPrice   Float
+  status       String         @default("confirmed")
+  createdAt    DateTime       @default(now())
+  returnFlightId Int?
+  returnFlight Flight?        @relation("ReturnFlight", fields: [returnFlightId], references: [id])
+  passengers   BookingPassenger[]
+  seats        BookingSeat[]
+  meals        BookingMeal[]
+  baggage      BookingBaggage[]
+  payment      Payment?
+  checkedIn    Boolean        @default(false)
+  checkedInAt  DateTime?
+}
+
+model BookingPassenger {
+  id          Int       @id @default(autoincrement())
+  bookingId   Int
+  booking     Booking   @relation(fields: [bookingId], references: [id])
+  passengerId Int
+  passenger   Passenger @relation(fields: [passengerId], references: [id])
+}
+
+model BookingSeat {
+  id          Int     @id @default(autoincrement())
+  bookingId   Int
+  booking     Booking @relation(fields: [bookingId], references: [id])
+  passengerId Int
+  seatNumber  String
+  price       Float
+}
+
+model BookingMeal {
+  id          Int     @id @default(autoincrement())
+  bookingId   Int
+  booking     Booking @relation(fields: [bookingId], references: [id])
+  mealId      Int
+  meal        Meal    @relation(fields: [mealId], references: [id])
+  passengerId Int
+  quantity    Int     @default(1)
+}
+
+model BookingBaggage {
+  id          Int     @id @default(autoincrement())
+  bookingId   Int
+  booking     Booking @relation(fields: [bookingId], references: [id])
+  passengerId Int
+  type        String
+  weight      Float
+  price       Float
+}
+
+model Payment {
+  id        Int       @id @default(autoincrement())
+  bookingId Int       @unique
+  booking   Booking   @relation(fields: [bookingId], references: [id])
+  amount    Float
+  status    String    @default("pending")
+  method    String    @default("no_payment")
+  createdAt DateTime  @default(now())
+}

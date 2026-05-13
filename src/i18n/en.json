@@ -1,0 +1,105 @@
+{
+  "search": {
+    "title": "Flight Search",
+    "from": "From",
+    "to": "To",
+    "departure": "Departure Date",
+    "return": "Return Date",
+    "oneWay": "One Way",
+    "roundTrip": "Round Trip",
+    "reset": "Reset",
+    "passengers": "Passengers",
+    "adult": "Adult (12+ years)",
+    "child": "Child (2-11 years)",
+    "infantWithSeat": "Infant with seat (<2 years)",
+    "infantNoSeat": "Infant without seat (<2 years)",
+    "senior": "Senior (57+ years)",
+    "search": "Search",
+    "chooseDate": "Choose date"
+  },
+  "tariff": {
+    "title": "Select Tariff",
+    "economy": "Economy Class",
+    "business": "Business Class",
+    "select": "Select",
+    "baggage": "Baggage",
+    "handLuggage": "Hand luggage",
+    "refundable": "Refundable",
+    "nonRefundable": "Non-refundable"
+  },
+  "seat": {
+    "title": "Seat Selection",
+    "business": "Business Class",
+    "economy": "Economy Class",
+    "occupied": "Occupied",
+    "free": "Available",
+    "selected": "Selected",
+    "price": "Price: {{price}} RUB",
+    "free": "Free"
+  },
+  "baggage": {
+    "title": "Additional Baggage",
+    "baggage23": "Baggage up to 23kg — 2,500 RUB",
+    "baggage30": "Baggage up to 30kg — 3,500 RUB",
+    "sport": "Sports equipment — 3,000 RUB",
+    "continue": "Continue without baggage"
+  },
+  "meal": {
+    "title": "In-flight Meals",
+    "select": "Select",
+    "continue": "Continue without meal"
+  },
+  "passenger": {
+    "title": "Passenger Details",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "middleName": "Middle Name",
+    "birthDate": "Date of Birth",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "email": "Email",
+    "phone": "Phone",
+    "continue": "Continue"
+  },
+  "overview": {
+    "title": "Order Overview",
+    "flight": "Flight",
+    "tariff": "Tariff",
+    "seats": "Seats",
+    "baggage": "Baggage",
+    "meals": "Meals",
+    "total": "Total",
+    "pay": "Pay"
+  },
+  "payment": {
+    "title": "Payment",
+    "noPayment": "No payment (test mode)",
+    "pay": "Pay",
+    "success": "Payment successful!"
+  },
+  "confirmation": {
+    "title": "Booking Confirmed!",
+    "bookingCode": "Booking Code",
+    "sendEmail": "Information sent to email"
+  },
+  "checkIn": {
+    "title": "Online Check-in",
+    "bookingCode": "Booking Code",
+    "lastName": "Last Name",
+    "start": "Start Check-in",
+    "boardingPass": "Boarding Pass",
+    "boardingTime": "Boarding",
+    "scanQR": "Scan QR code at boarding"
+  },
+  "booking": {
+    "title": "My Bookings",
+    "return": "Request Refund",
+    "returnPolicy": "24h before departure — 100%, less than 24h — 50%"
+  },
+  "common": {
+    "continue": "Continue",
+    "back": "Back",
+    "save": "Save"
+  }
+}

@@ -24,44 +24,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // POST — создать рейс
   if (req.method === 'POST') {
     try {
+      // Сначала создаём таблицу Aircraft если нет
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "Aircraft" (
+          id SERIAL PRIMARY KEY,
+          type TEXT NOT NULL,
+          model TEXT NOT NULL,
+          "totalRows" INTEGER NOT NULL,
+          "seatConfig" JSONB NOT NULL
+        )
+      `);
+
+      // Добавляем самолёт если нет
+      await prisma.$executeRawUnsafe(`
+        INSERT INTO "Aircraft" (id, type, model, "totalRows", "seatConfig") 
+        VALUES (1, 'Boeing 737-800', '738', 31, '{"business":{"rows":[1,2],"seats":["A","C","D"]},"economy":{"rows":[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31],"seats":["A","B","C","D","E","F"]}}')
+        ON CONFLICT (id) DO NOTHING
+      `);
+
+      // Создаём Flight если нет
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "Flight" (
+          id SERIAL PRIMARY KEY,
+          "flightNumber" TEXT UNIQUE NOT NULL,
+          "fromAirportId" INTEGER NOT NULL,
+          "toAirportId" INTEGER NOT NULL,
+          "aircraftId" INTEGER NOT NULL,
+          "departureTime" TIMESTAMP NOT NULL,
+          "arrivalTime" TIMESTAMP NOT NULL,
+          "durationMin" INTEGER NOT NULL,
+          "startDate" TIMESTAMP NOT NULL,
+          "endDate" TIMESTAMP NOT NULL,
+          "daysOfWeek" TEXT NOT NULL
+        )
+      `);
+
       const {
         flightNumber,
         fromAirportId,
         toAirportId,
-        aircraftId,
         departureTime,
         arrivalTime,
-        durationMin,
         startDate,
         endDate,
         daysOfWeek
       } = req.body
-
-      // Проверяем, что Aircraft есть, иначе создаём
-      let aircraft = await prisma.aircraft.findFirst({ where: { id: Number(aircraftId) || 1 } })
-      if (!aircraft) {
-        aircraft = await prisma.aircraft.create({
-          data: {
-            type: "Boeing 737-800",
-            model: "738",
-            totalRows: 31,
-            seatConfig: {
-              business: { rows: [1, 2], seats: ["A", "C", "D"] },
-              economy: { rows: Array.from({length: 29}, (_, i) => i + 3), seats: ["A", "B", "C", "D", "E", "F"] }
-            }
-          }
-        })
-      }
 
       const flight = await prisma.flight.create({
         data: {
           flightNumber,
           fromAirportId: Number(fromAirportId),
           toAirportId: Number(toAirportId),
-          aircraftId: aircraft.id,
+          aircraftId: 1,
           departureTime: new Date(departureTime),
           arrivalTime: new Date(arrivalTime),
-          durationMin: Number(durationMin) || 90,
+          durationMin: 90,
           startDate: new Date(startDate),
           endDate: new Date(endDate),
           daysOfWeek: daysOfWeek || '1,2,3,4,5,6,7'

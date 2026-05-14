@@ -4,37 +4,44 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 const prisma = new PrismaClient()
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') return res.status(405).end()
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { from, to, departureDate } = req.query
+  try {
+    const { from, to, departureDate } = req.query
 
-  const flights = await prisma.flight.findMany({
-    where: {
-      fromAirport: {
-        OR: [
-          { iata: from?.toString().toUpperCase() },
-          { city: { contains: from?.toString(), mode: 'insensitive' } }
-        ]
-      },
-      toAirport: {
-        OR: [
-          { iata: to?.toString().toUpperCase() },
-          { city: { contains: to?.toString(), mode: 'insensitive' } }
-        ]
-      },
-      startDate: { lte: new Date(departureDate as string) },
-      endDate: { gte: new Date(departureDate as string) }
-    },
-    include: {
-      fromAirport: true,
-      toAirport: true,
-      aircraft: true,
-      tariffs: {
-        where: { name: 'Лайт' },
-        take: 1
-      }
+    if (!from || !to) {
+      return res.json([])
     }
-  })
 
-  res.json(flights)
+    const flights = await prisma.flight.findMany({
+      where: {
+        fromAirport: {
+          OR: [
+            { iata: { equals: from.toString().toUpperCase(), mode: 'insensitive' } },
+            { city: { contains: from.toString(), mode: 'insensitive' } }
+          ]
+        },
+        toAirport: {
+          OR: [
+            { iata: { equals: to.toString().toUpperCase(), mode: 'insensitive' } },
+            { city: { contains: to.toString(), mode: 'insensitive' } }
+          ]
+        }
+      },
+      include: {
+        fromAirport: true,
+        toAirport: true,
+        aircraft: true,
+        tariffs: {
+          where: { name: 'Лайт' },
+          take: 1
+        }
+      }
+    })
+
+    return res.json(flights)
+  } catch (e: any) {
+    console.error('Search error:', e)
+    return res.status(500).json({ error: e.message })
+  }
 }

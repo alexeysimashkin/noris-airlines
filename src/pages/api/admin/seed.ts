@@ -1,94 +1,101 @@
-import { PrismaClient } from '@prisma/client'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
+// Этот SQL точно создаст таблицу и зальёт аэропорты
+const BULK_SQL = `
+CREATE TABLE IF NOT EXISTS "Airport" (
+  id SERIAL PRIMARY KEY,
+  iata TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  city TEXT NOT NULL,
+  country TEXT NOT NULL
+);
+
+INSERT INTO "Airport" (iata, name, city, country) VALUES
+('VKO','Внуково','Москва','Россия'),
+('SVO','Шереметьево','Москва','Россия'),
+('DME','Домодедово','Москва','Россия'),
+('LED','Пулково','Санкт-Петербург','Россия'),
+('KUF','Курумоч','Самара','Россия'),
+('SMH','Симашкино','Самара','Россия'),
+('TJM','Рощино','Тюмень','Россия'),
+('TUM','Тюменский','Тюмень','Россия'),
+('SVX','Кольцово','Екатеринбург','Россия'),
+('HBS','Шабровский','Екатеринбург','Россия'),
+('UFA','Уфа','Уфа','Россия'),
+('BHK','Башкортостан','Уфа','Россия'),
+('NJC','Нижневартовск','Нижневартовск','Россия'),
+('SGC','Сургут','Сургут','Россия'),
+('KGP','Когалым','Когалым','Россия'),
+('AER','Сочи','Сочи','Россия'),
+('KRR','Пашковский','Краснодар','Россия'),
+('GDZ','Геленджик','Геленджик','Россия'),
+('KGD','Храброво','Калининград','Россия'),
+('GOJ','Стригино','Нижний Новгород','Россия'),
+('CEK','Баландино','Челябинск','Россия'),
+('GRV','Грозный','Грозный','Россия'),
+('IKT','Иркутск','Иркутск','Россия'),
+('KJA','Емельяново','Красноярск','Россия'),
+('KZN','Казань','Казань','Россия'),
+('MCX','Уйташ','Махачкала','Россия'),
+('MMK','Мурманск','Мурманск','Россия'),
+('MRV','Минеральные Воды','Минеральные Воды','Россия'),
+('OVB','Толмачёво','Новосибирск','Россия'),
+('PEE','Большое Савино','Пермь','Россия'),
+('ROV','Платов','Ростов-на-Дону','Россия'),
+('VOG','Гумрак','Волгоград','Россия'),
+('VVO','Кневичи','Владивосток','Россия'),
+('SKD','Самарканд','Самарканд','Узбекистан'),
+('TBS','Тбилиси','Тбилиси','Грузия'),
+('OSS','Ош','Ош','Киргизия'),
+('TAS','Ташкент','Ташкент','Узбекистан'),
+('EVN','Ереван','Ереван','Армения'),
+('BUS','Батуми','Батуми','Грузия'),
+('DYU','Душанбе','Душанбе','Таджикистан'),
+('MSQ','Минск','Минск','Беларусь'),
+('NMA','Наманган','Наманган','Узбекистан'),
+('UGC','Ургенч','Ургенч','Узбекистан'),
+('LBD','Худжанд','Худжанд','Таджикистан'),
+('AYT','Анталья','Анталья','Турция'),
+('IST','Стамбул','Стамбул','Турция'),
+('TZX','Трабзон','Трабзон','Турция'),
+('DXB','Дубай','Дубай','ОАЭ'),
+('RKT','Рас-Эль-Хайма','Рас-Эль-Хайма','ОАЭ'),
+('SHJ','Шарджа','Шарджа','ОАЭ'),
+('SSH','Шарм-эль-Шейх','Шарм-эль-Шейх','Египет'),
+('HRG','Хургада','Хургада','Египет'),
+('CXR','Нячанг','Нячанг','Вьетнам'),
+('PEK','Пекин','Пекин','Китай'),
+('HKT','Пхукет','Пхукет','Таиланд')
+ON CONFLICT (iata) DO NOTHING;
+`
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const prisma = new PrismaClient()
-
   try {
-    // Шаг 1: Создаём таблицы
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "Airport" (
-        id SERIAL PRIMARY KEY,
-        iata TEXT UNIQUE NOT NULL,
-        name TEXT NOT NULL,
-        city TEXT NOT NULL,
-        country TEXT NOT NULL
-      )
-    `);
+    const neonUrl = process.env.DATABASE_URL
+    if (!neonUrl) return res.status(500).json({ error: 'DATABASE_URL не задан' })
 
-    // Шаг 2: Загружаем аэропорты
-    const airports = [
-      { iata: 'VKO', name: 'Внуково', city: 'Москва', country: 'Россия' },
-      { iata: 'SVO', name: 'Шереметьево', city: 'Москва', country: 'Россия' },
-      { iata: 'DME', name: 'Домодедово', city: 'Москва', country: 'Россия' },
-      { iata: 'LED', name: 'Пулково', city: 'Санкт-Петербург', country: 'Россия' },
-      { iata: 'KUF', name: 'Курумоч', city: 'Самара', country: 'Россия' },
-      { iata: 'SMH', name: 'Симашкино', city: 'Самара', country: 'Россия' },
-      { iata: 'TJM', name: 'Рощино', city: 'Тюмень', country: 'Россия' },
-      { iata: 'TUM', name: 'Тюменский', city: 'Тюмень', country: 'Россия' },
-      { iata: 'SVX', name: 'Кольцово', city: 'Екатеринбург', country: 'Россия' },
-      { iata: 'HBS', name: 'Шабровский', city: 'Екатеринбург', country: 'Россия' },
-      { iata: 'UFA', name: 'Уфа', city: 'Уфа', country: 'Россия' },
-      { iata: 'BHK', name: 'Башкортостан', city: 'Уфа', country: 'Россия' },
-      { iata: 'NJC', name: 'Нижневартовск', city: 'Нижневартовск', country: 'Россия' },
-      { iata: 'SGC', name: 'Сургут', city: 'Сургут', country: 'Россия' },
-      { iata: 'KGP', name: 'Когалым', city: 'Когалым', country: 'Россия' },
-      { iata: 'AER', name: 'Сочи', city: 'Сочи', country: 'Россия' },
-      { iata: 'KRR', name: 'Пашковский', city: 'Краснодар', country: 'Россия' },
-      { iata: 'GDZ', name: 'Геленджик', city: 'Геленджик', country: 'Россия' },
-      { iata: 'KGD', name: 'Храброво', city: 'Калининград', country: 'Россия' },
-      { iata: 'GOJ', name: 'Стригино', city: 'Нижний Новгород', country: 'Россия' },
-      { iata: 'AAQ', name: 'Анапа', city: 'Анапа', country: 'Россия' },
-      { iata: 'CEK', name: 'Баландино', city: 'Челябинск', country: 'Россия' },
-      { iata: 'GRV', name: 'Грозный', city: 'Грозный', country: 'Россия' },
-      { iata: 'IKT', name: 'Иркутск', city: 'Иркутск', country: 'Россия' },
-      { iata: 'KJA', name: 'Емельяново', city: 'Красноярск', country: 'Россия' },
-      { iata: 'KZN', name: 'Казань', city: 'Казань', country: 'Россия' },
-      { iata: 'MCX', name: 'Уйташ', city: 'Махачкала', country: 'Россия' },
-      { iata: 'MMK', name: 'Мурманск', city: 'Мурманск', country: 'Россия' },
-      { iata: 'MRV', name: 'Минеральные Воды', city: 'Минеральные Воды', country: 'Россия' },
-      { iata: 'OVB', name: 'Толмачёво', city: 'Новосибирск', country: 'Россия' },
-      { iata: 'PEE', name: 'Большое Савино', city: 'Пермь', country: 'Россия' },
-      { iata: 'ROV', name: 'Платов', city: 'Ростов-на-Дону', country: 'Россия' },
-      { iata: 'VOG', name: 'Гумрак', city: 'Волгоград', country: 'Россия' },
-      { iata: 'VVO', name: 'Кневичи', city: 'Владивосток', country: 'Россия' },
-      { iata: 'SKD', name: 'Самарканд', city: 'Самарканд', country: 'Узбекистан' },
-      { iata: 'TBS', name: 'Тбилиси', city: 'Тбилиси', country: 'Грузия' },
-      { iata: 'OSS', name: 'Ош', city: 'Ош', country: 'Киргизия' },
-      { iata: 'TAS', name: 'Ташкент', city: 'Ташкент', country: 'Узбекистан' },
-      { iata: 'EVN', name: 'Ереван', city: 'Ереван', country: 'Армения' },
-      { iata: 'BUS', name: 'Батуми', city: 'Батуми', country: 'Грузия' },
-      { iata: 'DYU', name: 'Душанбе', city: 'Душанбе', country: 'Таджикистан' },
-      { iata: 'MSQ', name: 'Минск', city: 'Минск', country: 'Беларусь' },
-      { iata: 'NMA', name: 'Наманган', city: 'Наманган', country: 'Узбекистан' },
-      { iata: 'UGC', name: 'Ургенч', city: 'Ургенч', country: 'Узбекистан' },
-      { iata: 'LBD', name: 'Худжанд', city: 'Худжанд', country: 'Таджикистан' },
-      { iata: 'AYT', name: 'Анталья', city: 'Анталья', country: 'Турция' },
-      { iata: 'IST', name: 'Стамбул', city: 'Стамбул', country: 'Турция' },
-      { iata: 'TZX', name: 'Трабзон', city: 'Трабзон', country: 'Турция' },
-      { iata: 'DXB', name: 'Дубай', city: 'Дубай', country: 'ОАЭ' },
-      { iata: 'RKT', name: 'Рас-Эль-Хайма', city: 'Рас-Эль-Хайма', country: 'ОАЭ' },
-      { iata: 'SHJ', name: 'Шарджа', city: 'Шарджа', country: 'ОАЭ' },
-      { iata: 'SSH', name: 'Шарм-эль-Шейх', city: 'Шарм-эль-Шейх', country: 'Египет' },
-      { iata: 'HRG', name: 'Хургада', city: 'Хургада', country: 'Египет' },
-      { iata: 'CXR', name: 'Нячанг', city: 'Нячанг', country: 'Вьетнам' },
-      { iata: 'PEK', name: 'Пекин', city: 'Пекин', country: 'Китай' },
-      { iata: 'HKT', name: 'Пхукет', city: 'Пхукет', country: 'Таиланд' },
-    ];
+    // Используем fetch к Neon HTTP API
+    const projectId = neonUrl.match(/ep-[a-z0-9-]+/i)?.[0]
+    if (!projectId) return res.status(500).json({ error: 'Не удалось извлечь projectId из DATABASE_URL' })
 
-    let count = 0;
-    for (const a of airports) {
-      await prisma.$executeRawUnsafe(
-        `INSERT INTO "Airport" (iata, name, city, country) VALUES ($1, $2, $3, $4) ON CONFLICT (iata) DO NOTHING`,
-        a.iata, a.name, a.city, a.country
-      );
-      count++;
-    }
+    const apiUrl = `https://console.neon.tech/api/v2/projects/${projectId}/sql`
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.NEON_API_KEY || ''}`
+      },
+      body: JSON.stringify({
+        sql: BULK_SQL,
+        database: 'noris',
+        project_id: projectId
+      })
+    })
 
-    res.json({ success: true, message: `✅ Готово! Загружено ${count} аэропортов. Обнови страницу админки.` });
+    const result = await response.json()
+    res.json({ success: true, message: '✅ Аэропорты загружены через Neon API!', details: result })
   } catch (e: any) {
-    res.status(500).json({ success: false, message: '❌ Ошибка: ' + e.message });
-  } finally {
-    await prisma.$disconnect();
+    res.status(500).json({ success: false, message: '❌ ' + e.message })
   }
 }

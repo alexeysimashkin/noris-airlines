@@ -43,6 +43,7 @@ model Flight {
   daysOfWeek    String
   tariffs       FlightTariff[]
   bookings      Booking[]
+  returnBookings Booking[]     @relation("ReturnFlight")
 }
 
 model FlightTariff {

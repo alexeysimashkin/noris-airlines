@@ -1,13 +1,12 @@
 import { PrismaClient } from '@prisma/client'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
-const prisma = new PrismaClient()
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
+  const prisma = new PrismaClient()
 
   try {
-    const { from, to, departureDate } = req.query
+    const from = req.query.from as string
+    const to = req.query.to as string
 
     if (!from || !to) {
       return res.json([])
@@ -17,14 +16,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: {
         fromAirport: {
           OR: [
-            { iata: { equals: from.toString().toUpperCase(), mode: 'insensitive' } },
-            { city: { contains: from.toString(), mode: 'insensitive' } }
+            { iata: from.toUpperCase() },
+            { city: { contains: from, mode: 'insensitive' } }
           ]
         },
         toAirport: {
           OR: [
-            { iata: { equals: to.toString().toUpperCase(), mode: 'insensitive' } },
-            { city: { contains: to.toString(), mode: 'insensitive' } }
+            { iata: to.toUpperCase() },
+            { city: { contains: to, mode: 'insensitive' } }
           ]
         }
       },
@@ -33,15 +32,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         toAirport: true,
         aircraft: true,
         tariffs: {
-          where: { name: 'Лайт' },
           take: 1
         }
-      }
+      },
+      take: 20
     })
 
     return res.json(flights)
   } catch (e: any) {
-    console.error('Search error:', e)
-    return res.status(500).json({ error: e.message })
+    return res.json({ error: e.message })
+  } finally {
+    await prisma.$disconnect()
   }
 }

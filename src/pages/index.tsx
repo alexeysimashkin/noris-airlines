@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useLanguage } from '@/context/LanguageContext'
 
@@ -17,6 +17,20 @@ export default function Home() {
     infantNoSeat: 0,
     senior: 0
   })
+  const [showPassengers, setShowPassengers] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const totalPassengers = Object.values(passengers).reduce((a, b) => a + b, 0)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowPassengers(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleSearch = () => {
     const params = new URLSearchParams()
@@ -35,13 +49,28 @@ export default function Home() {
     router.push(`/search?${params.toString()}`)
   }
 
+  const updatePassenger = (type: string, delta: number) => {
+    setPassengers(prev => ({
+      ...prev,
+      [type]: Math.max(0, Math.min(9, (prev[type as keyof typeof prev] || 0) + delta))
+    }))
+  }
+
+  const passengerTypes = [
+    { key: 'adult', label: t.search.adult, desc: 'от 12 лет' },
+    { key: 'child', label: t.search.child, desc: '2–11 лет' },
+    { key: 'infantWithSeat', label: t.search.infantWithSeat, desc: 'до 2 лет, с местом' },
+    { key: 'infantNoSeat', label: t.search.infantNoSeat, desc: 'до 2 лет, без места' },
+    { key: 'senior', label: t.search.senior, desc: 'от 57 лет, скидка 10%' },
+  ]
+
   return (
     <>
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '36px', color: '#1a3a5c', fontWeight: 700, marginBottom: '10px' }}>
+        <h1 style={{ fontSize: '36px', background: 'linear-gradient(135deg, #6b3fa0, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 700, marginBottom: '10px' }}>
           {t.search.title}
         </h1>
-        <p style={{ color: '#5a6c7d', fontSize: '18px' }}>
+        <p style={{ color: '#6b5b8a', fontSize: '18px' }}>
           Откройте мир с Noris Airlines
         </p>
       </div>
@@ -94,13 +123,13 @@ export default function Home() {
             className={`btn ${tripType === 'oneway' ? 'btn-primary' : 'btn-outline'}`}
             onClick={() => setTripType('oneway')}
           >
-            {t.search.oneWay}
+            ✈ {t.search.oneWay}
           </button>
           <button 
             className={`btn ${tripType === 'roundtrip' ? 'btn-primary' : 'btn-outline'}`}
             onClick={() => setTripType('roundtrip')}
           >
-            {t.search.roundTrip}
+            ↔ {t.search.roundTrip}
           </button>
           <button 
             className="btn btn-outline btn-sm"
@@ -113,83 +142,63 @@ export default function Home() {
               setPassengers({ adult: 1, child: 0, infantWithSeat: 0, infantNoSeat: 0, senior: 0 })
             }}
           >
-            {t.search.reset}
+            ↺ {t.search.reset}
           </button>
         </div>
 
-        <div className="form-group">
+        {/* Passenger Dropdown */}
+        <div className="form-group" ref={dropdownRef}>
           <label className="form-label">{t.search.passengers}</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-            <div style={{ flex: '1', minWidth: '150px' }}>
-              <label style={{ fontSize: '13px', color: '#5a6c7d' }}>
-                {t.search.adult}
-              </label>
-              <input 
-                type="number" 
-                className="form-input"
-                min="0"
-                max="9"
-                value={passengers.adult}
-                onChange={e => setPassengers(p => ({...p, adult: parseInt(e.target.value) || 0}))}
-              />
-            </div>
-            <div style={{ flex: '1', minWidth: '150px' }}>
-              <label style={{ fontSize: '13px', color: '#5a6c7d' }}>
-                {t.search.child}
-              </label>
-              <input 
-                type="number" 
-                className="form-input"
-                min="0"
-                max="9"
-                value={passengers.child}
-                onChange={e => setPassengers(p => ({...p, child: parseInt(e.target.value) || 0}))}
-              />
-            </div>
-            <div style={{ flex: '1', minWidth: '150px' }}>
-              <label style={{ fontSize: '13px', color: '#5a6c7d' }}>
-                {t.search.infantWithSeat}
-              </label>
-              <input 
-                type="number" 
-                className="form-input"
-                min="0"
-                max="9"
-                value={passengers.infantWithSeat}
-                onChange={e => setPassengers(p => ({...p, infantWithSeat: parseInt(e.target.value) || 0}))}
-              />
-            </div>
-            <div style={{ flex: '1', minWidth: '150px' }}>
-              <label style={{ fontSize: '13px', color: '#5a6c7d' }}>
-                {t.search.infantNoSeat}
-              </label>
-              <input 
-                type="number" 
-                className="form-input"
-                min="0"
-                max="9"
-                value={passengers.infantNoSeat}
-                onChange={e => setPassengers(p => ({...p, infantNoSeat: parseInt(e.target.value) || 0}))}
-              />
-            </div>
-            <div style={{ flex: '1', minWidth: '150px' }}>
-              <label style={{ fontSize: '13px', color: '#5a6c7d' }}>
-                {t.search.senior}
-              </label>
-              <input 
-                type="number" 
-                className="form-input"
-                min="0"
-                max="9"
-                value={passengers.senior}
-                onChange={e => setPassengers(p => ({...p, senior: parseInt(e.target.value) || 0}))}
-              />
-            </div>
+          <div className="passenger-dropdown">
+            <button 
+              type="button"
+              className="passenger-trigger"
+              onClick={() => setShowPassengers(!showPassengers)}
+            >
+              <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>
+                  {totalPassengers} пассажир{totalPassengers > 1 ? (totalPassengers < 5 ? 'а' : 'ов') : ''}
+                </span>
+                <span style={{ fontSize: '12px', color: '#6b5b8a' }}>
+                  {showPassengers ? '▲' : '▼'}
+                </span>
+              </span>
+            </button>
+            
+            {showPassengers && (
+              <div className="passenger-menu">
+                {passengerTypes.map(type => (
+                  <div key={type.key} className="passenger-item">
+                    <div className="passenger-item-info">
+                      <div className="passenger-item-label">{type.label}</div>
+                      <div className="passenger-item-desc">{type.desc}</div>
+                    </div>
+                    <div className="passenger-counter">
+                      <button 
+                        type="button"
+                        onClick={() => updatePassenger(type.key, -1)}
+                        disabled={passengers[type.key as keyof typeof passengers] <= 0}
+                      >
+                        −
+                      </button>
+                      <span>{passengers[type.key as keyof typeof passengers]}</span>
+                      <button 
+                        type="button"
+                        onClick={() => updatePassenger(type.key, 1)}
+                        disabled={passengers[type.key as keyof typeof passengers] >= 9}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        <button className="btn btn-primary" style={{ width: '100%', fontSize: '18px', padding: '15px' }} onClick={handleSearch}>
-          {t.search.search}
+        <button className="btn btn-primary" style={{ width: '100%', fontSize: '18px', padding: '16px' }} onClick={handleSearch}>
+          🔍 {t.search.search}
         </button>
       </div>
     </>

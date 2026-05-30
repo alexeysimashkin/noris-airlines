@@ -23,10 +23,8 @@ export default function FinalOverview() {
         const tariff = await tariffRes.json()
         const allMeals = await mealsRes.json()
 
-        // Базовая цена тарифа
         let price = tariff.price || 0
 
-        // Стоимость места
         if (seats && tariff.class === 'economy') {
           const freeRows = tariff.freeSeatRows?.split(',').map(Number) || []
           const selectedSeat = (seats as string).split(',')[0]
@@ -37,20 +35,17 @@ export default function FinalOverview() {
           }
         }
 
-        // Багаж
         const selectedBaggage = baggage ? (baggage as string).split(',').filter(Boolean) : []
         if (selectedBaggage.includes('baggage23')) price += 2500
         if (selectedBaggage.includes('baggage30')) price += 3500
         if (selectedBaggage.includes('sport')) price += 3000
 
-        // Питание
         const selectedMeals = meals ? (meals as string).split(',').filter(Boolean) : []
         selectedMeals.forEach(mealId => {
           const meal = allMeals.find((m: any) => m.id === Number(mealId))
           if (meal) price += meal.price
         })
 
-        // Количество пассажиров
         const passengerList = passengers ? JSON.parse(passengers as string) : []
         const total = price * (passengerList.length || 1)
 
@@ -65,6 +60,11 @@ export default function FinalOverview() {
 
     fetchData()
   }, [router.isReady, flightId, tariffId, seats, baggage, meals, passengers])
+
+  const formatTime = (dateStr: string) => {
+    const d = new Date(dateStr)
+    return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+  }
 
   if (loading) return <div className="card"><p>Загрузка...</p></div>
   if (!data) return <div className="card"><p>Ошибка загрузки данных</p></div>
@@ -89,9 +89,9 @@ export default function FinalOverview() {
           <div style={{ color: '#666', marginTop: '4px' }}>
             {flight.fromAirport?.city} → {flight.toAirport?.city}
             &nbsp;|&nbsp;
-            {new Date(flight.departureTime).toLocaleDateString('ru-RU')}
+            {new Date(flight.departureTime).toLocaleDateString('ru-RU', { timeZone: 'UTC' })}
             &nbsp;
-            {new Date(flight.departureTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+            {formatTime(flight.departureTime)}
           </div>
         </div>
 

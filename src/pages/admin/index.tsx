@@ -90,6 +90,11 @@ export default function AdminPanel() {
     fetchMeals()
   }
 
+  const formatTime = (dateStr: string) => {
+    const d = new Date(dateStr)
+    return d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+  }
+
   return (
     <div>
       <h1 className="card-title">🛫 Админ-панель</h1>
@@ -156,7 +161,7 @@ export default function AdminPanel() {
           <h3 style={{ marginTop: 20 }}>📋 Рейсы ({flights.length})</h3>
           {flights.length === 0 ? <p style={{ color: '#999' }}>Нет рейсов</p> : (
             <table className="admin-table"><thead><tr><th>Рейс</th><th>Маршрут</th><th>Вылет</th><th>×</th></tr></thead><tbody>{flights.map(f => (
-              <tr key={f.id}><td>{f.flightNumber}</td><td>{f.fromAirport?.city} → {f.toAirport?.city}</td><td>{new Date(f.departureTime).toLocaleString('ru-RU')}</td><td><button className="btn btn-sm btn-outline" style={{ color: 'red', borderColor: 'red' }} onClick={() => deleteFlight(f.id)}>🗑️</button></td></tr>
+              <tr key={f.id}><td>{f.flightNumber}</td><td>{f.fromAirport?.city} → {f.toAirport?.city}</td><td>{formatTime(f.departureTime)}</td><td><button className="btn btn-sm btn-outline" style={{ color: 'red', borderColor: 'red' }} onClick={() => deleteFlight(f.id)}>🗑️</button></td></tr>
             ))}</tbody></table>
           )}
         </div>

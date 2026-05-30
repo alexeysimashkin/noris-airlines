@@ -15,27 +15,31 @@ export default function Overview() {
       .then(setData)
   }, [flightId, tariffId])
 
+  const formatTime = (dateStr: string) => {
+    const d = new Date(dateStr)
+    return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+  }
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr)
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+  }
+
   if (!data) return <div className="card">Загрузка...</div>
 
   return (
     <div className="card">
       <h2 className="card-title">Вы выбрали</h2>
-      
+
       <div style={{ display: 'grid', gap: '15px' }}>
         <div style={{ padding: '15px', background: '#f8f9fa', borderRadius: '10px' }}>
           <strong>🛫 Рейс:</strong> {data.flight.flightNumber}
         </div>
         <div style={{ padding: '15px', background: '#f8f9fa', borderRadius: '10px' }}>
-          <strong>📅 Дата:</strong> {new Date(data.flight.departureTime).toLocaleDateString('ru-RU', { 
-            day: 'numeric', month: 'long', year: 'numeric' 
-          })}
+          <strong>📅 Дата:</strong> {formatDate(data.flight.departureTime)}
         </div>
         <div style={{ padding: '15px', background: '#f8f9fa', borderRadius: '10px' }}>
-          <strong>🕐 Время:</strong> {new Date(data.flight.departureTime).toLocaleTimeString('ru-RU', { 
-            hour: '2-digit', minute: '2-digit' 
-          })} → {new Date(data.flight.arrivalTime).toLocaleTimeString('ru-RU', { 
-            hour: '2-digit', minute: '2-digit' 
-          })}
+          <strong>🕐 Время:</strong> {formatTime(data.flight.departureTime)} → {formatTime(data.flight.arrivalTime)}
         </div>
         <div style={{ padding: '15px', background: '#f8f9fa', borderRadius: '10px' }}>
           <strong>✈ Самолет:</strong> {data.flight.aircraft.type}
@@ -44,9 +48,9 @@ export default function Overview() {
           <strong>💰 Тариф:</strong> {data.tariff.name} — {data.tariff.price.toLocaleString()} ₽
         </div>
       </div>
-      
-      <button 
-        className="btn btn-primary" 
+
+      <button
+        className="btn btn-primary"
         style={{ marginTop: '20px', width: '100%' }}
         onClick={() => router.push({
           pathname: '/seat',

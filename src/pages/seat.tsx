@@ -6,7 +6,7 @@ import { useLanguage } from '@/context/LanguageContext'
 export default function SeatSelection() {
   const { t } = useLanguage()
   const router = useRouter()
-  const { flightId, tariffId } = router.query
+  const { tariffId } = router.query
   const [tariff, setTariff] = useState<any>(null)
   const [selectedSeats, setSelectedSeats] = useState<string[]>([])
 
@@ -26,17 +26,16 @@ export default function SeatSelection() {
   return (
     <div className="card">
       <h2 className="card-title">{t.seat.title}</h2>
-      
+
       <SeatMap
-        flightId={Number(flightId)}
         tariffClass={tariff.class}
         freeSeatRows={tariff.freeSeatRows}
         seatDiscount={tariff.seatDiscount}
         onSelect={handleSeatSelect}
       />
-      
-      <button 
-        className="btn btn-primary" 
+
+      <button
+        className="btn btn-primary"
         style={{ marginTop: '20px', width: '100%' }}
         onClick={() => router.push({
           pathname: '/baggage',

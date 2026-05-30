@@ -20,6 +20,11 @@ export default function SearchReturn() {
       .catch(() => setLoading(false))
   }, [router.isReady, router.query])
 
+  const formatTime = (dateStr: string) => {
+    const d = new Date(dateStr)
+    return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+  }
+
   if (loading) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
@@ -56,7 +61,7 @@ export default function SearchReturn() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ fontSize: '24px', fontWeight: 700, color: '#6b3fa0' }}>
-                    {new Date(flight.departureTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                    {formatTime(flight.departureTime)}
                   </div>
                   <div style={{ fontSize: '16px', fontWeight: 600 }}>{flight.fromAirport?.city || '—'}</div>
                 </div>
@@ -69,7 +74,7 @@ export default function SearchReturn() {
                 </div>
                 <div>
                   <div style={{ fontSize: '24px', fontWeight: 700, color: '#6b3fa0' }}>
-                    {new Date(flight.arrivalTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                    {formatTime(flight.arrivalTime)}
                   </div>
                   <div style={{ fontSize: '16px', fontWeight: 600 }}>{flight.toAirport?.city || '—'}</div>
                 </div>

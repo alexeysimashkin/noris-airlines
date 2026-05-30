@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useLanguage } from '@/context/LanguageContext'
 
 interface SeatMapProps {
   tariffClass: string
@@ -10,125 +9,88 @@ interface SeatMapProps {
 }
 
 export default function SeatMap({ tariffClass, freeSeatRows, seatDiscount, onSelect, selectedSeat: initialSeat }: SeatMapProps) {
-  const { t } = useLanguage()
   const [selectedSeat, setSelectedSeat] = useState<string | null>(initialSeat || null)
-
   const occupiedSeats = ['3A', '4B', '5C', '10A', '15F']
   const isBusiness = tariffClass === 'business'
   const freeRows = freeSeatRows?.split(',').map(Number) || []
-  const businessSeats = ['A', 'C', 'D']
-  const economySeats = ['A', 'B', 'C', 'D', 'E', 'F']
 
-  const getSeatPrice = (row: number) => {
-    if (freeRows.includes(row)) return 0
-    if (isBusiness) return 0
-    const basePrice = 700
-    const discount = seatDiscount || 0
-    return Math.round(basePrice * (1 - discount / 100))
-  }
-
-  const isSeatAvailable = (row: number, seat: string) => {
-    if (isBusiness) {
-      if (row <= 2 && businessSeats.includes(seat)) return true
-      return false
-    }
-    if (row >= 3) return true
-    return false
-  }
-
-  const handleSeatClick = (seatId: string) => {
-    if (occupiedSeats.includes(seatId)) return
-    const row = parseInt(seatId)
-    const letter = seatId.replace(row.toString(), '')
-    if (!isSeatAvailable(row, letter)) return
+  const handleSeatClick = (seatId: string, available: boolean) => {
+    if (!available || occupiedSeats.includes(seatId)) return
     setSelectedSeat(seatId)
     onSelect(seatId)
   }
 
   return (
     <div>
-      <div style={{ marginBottom: '25px' }}>
-        <h4 style={{ color: '#7c3aed', marginBottom: '10px', fontSize: '16px' }}>
+      {/* Бизнес-класс */}
+      <div style={{ marginBottom: 25 }}>
+        <h4 style={{ color: '#7c3aed', marginBottom: 10, fontSize: 16 }}>
           💎 Бизнес-класс (ряды 1–2)
-          {isBusiness && <span style={{ fontSize: '12px', color: '#4caf50', marginLeft: '8px' }}>— доступен для вашего тарифа</span>}
-          {!isBusiness && <span style={{ fontSize: '12px', color: '#999', marginLeft: '8px' }}>— только для бизнес-тарифов</span>}
+          {isBusiness && <span style={{ fontSize: 12, color: '#4caf50', marginLeft: 8 }}>— доступен для вашего тарифа</span>}
+          {!isBusiness && <span style={{ fontSize: 12, color: '#999', marginLeft: 8 }}>— недоступен (только бизнес-тарифы)</span>}
         </h4>
-        <div className="seat-map">
-          {[1, 2].map(row => (
-            <div key={row} className="seat-row">
-              <span className="seat-row-label">{row}</span>
-              {businessSeats.map(seat => {
-                const seatId = `${row}${seat}`
-                const occupied = occupiedSeats.includes(seatId)
-                const selected = selectedSeat === seatId
-                const available = isBusiness && !occupied
-                return (
-                  <div
-                    key={seatId}
-                    className={`seat business ${occupied ? 'occupied' : ''} ${selected ? 'selected' : ''} ${available && !selected ? 'available' : ''}`}
-                    style={{ cursor: available ? 'pointer' : 'not-allowed', opacity: !isBusiness && !occupied ? 0.5 : 1 }}
-                    onClick={() => available && handleSeatClick(seatId)}
-                    title={available ? (getSeatPrice(row) === 0 ? 'Бесплатно' : getSeatPrice(row) + ' ₽') : occupied ? 'Занято' : 'Недоступно'}
-                  >
-                    {seat}
-                  </div>
-                )
-              })}
-              <span style={{ marginLeft: '15px', fontSize: '11px', color: '#7c3aed' }}>Бизнес</span>
-            </div>
-          ))}
-        </div>
+        {[1, 2].map(row => (
+          <div key={row} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 5 }}>
+            <span style={{ width: 24, textAlign: 'right', fontWeight: 600, color: '#6b5b8a', fontSize: 13 }}>{row}</span>
+            {['A', 'C', 'D'].map(seat => {
+              const seatId = `${row}${seat}`
+              const occupied = occupiedSeats.includes(seatId)
+              const selected = selectedSeat === seatId
+              const available = isBusiness && !occupied
+              let bg = '#f5f3ff'
+              let border = '1px solid #e8e0f0'
+              let color = '#999'
+              let cursor = 'not-allowed'
+              if (occupied) { bg = '#f5f5f5'; color = '#ccc' }
+              if (available) { bg = '#faf5ff'; border = '1px solid #c084fc'; color = '#7c3aed'; cursor = 'pointer' }
+              if (selected) { bg = '#8b5cf6'; border = '1px solid #7c3aed'; color = 'white' }
+              return (
+                <div key={seatId} onClick={() => handleSeatClick(seatId, available)} style={{
+                  width: 35, height: 35, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 600, background: bg, border, color, cursor, transition: 'all 0.2s'
+                }}>{seat}</div>
+              )
+            })}
+            <span style={{ marginLeft: 10, fontSize: 11, color: '#7c3aed' }}>Бизнес</span>
+          </div>
+        ))}
       </div>
 
+      {/* Эконом-класс */}
       <div>
-        <h4 style={{ color: '#4caf50', marginBottom: '10px', fontSize: '16px' }}>
-          ✈ Эконом-класс (ряды 3–31)
-        </h4>
-        <div className="seat-map">
-          {Array.from({ length: 29 }, (_, i) => i + 3).map(row => (
-            <div key={row} className="seat-row">
-              <span className="seat-row-label">{row}</span>
-              {economySeats.map((seat, index) => {
-                const seatId = `${row}${seat}`
-                const occupied = occupiedSeats.includes(seatId)
-                const selected = selectedSeat === seatId
-                const available = !occupied
-                return (
-                  <div key={seatId}>
-                    {index === 3 && <div style={{ width: '22px', display: 'inline-block' }}></div>}
-                    <div
-                      className={`seat ${occupied ? 'occupied' : 'available'} ${selected ? 'selected' : ''}`}
-                      style={{ cursor: occupied ? 'not-allowed' : 'pointer' }}
-                      onClick={() => available && handleSeatClick(seatId)}
-                      title={available ? (getSeatPrice(row) === 0 ? 'Бесплатно' : getSeatPrice(row) + ' ₽') : 'Занято'}
-                    >
-                      {seat}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ))}
-        </div>
+        <h4 style={{ color: '#4caf50', marginBottom: 10, fontSize: 16 }}>✈ Эконом-класс (ряды 3–31)</h4>
+        {Array.from({ length: 29 }, (_, i) => i + 3).map(row => (
+          <div key={row} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 5 }}>
+            <span style={{ width: 24, textAlign: 'right', fontWeight: 600, color: '#6b5b8a', fontSize: 13 }}>{row}</span>
+            {['A', 'B', 'C', 'D', 'E', 'F'].map((seat, idx) => {
+              const seatId = `${row}${seat}`
+              const occupied = occupiedSeats.includes(seatId)
+              const selected = selectedSeat === seatId
+              const available = !occupied
+              let bg = '#f0fdf0'
+              let border = '1px solid #86efac'
+              let color = '#166534'
+              let cursor = 'pointer'
+              if (occupied) { bg = '#f5f5f5'; border = '1px solid #e0d8f0'; color = '#ccc'; cursor = 'not-allowed' }
+              if (selected) { bg = '#8b5cf6'; border = '1px solid #7c3aed'; color = 'white' }
+              const gap = idx === 3 ? { marginLeft: 22 } : {}
+              return (
+                <div key={seatId} onClick={() => handleSeatClick(seatId, available)} style={{
+                  width: 35, height: 35, borderRadius: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 600, background: bg, border, color, cursor, transition: 'all 0.2s', ...gap
+                }}>{seat}</div>
+              )
+            })}
+          </div>
+        ))}
       </div>
 
-      <div style={{ marginTop: '20px', display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <div className="seat available" style={{ width: '24px', height: '24px' }}></div>
-          <span style={{ fontSize: '13px' }}>Свободно</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <div className="seat occupied" style={{ width: '24px', height: '24px' }}></div>
-          <span style={{ fontSize: '13px' }}>Занято</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <div className="seat selected" style={{ width: '24px', height: '24px' }}></div>
-          <span style={{ fontSize: '13px' }}>Выбрано</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <div className="seat business" style={{ width: '24px', height: '24px', opacity: 0.5 }}></div>
-          <span style={{ fontSize: '13px' }}>Бизнес</span>
-        </div>
+      {/* Легенда */}
+      <div style={{ marginTop: 20, display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}><div style={{ width: 20, height: 20, borderRadius: 6, background: '#f0fdf0', border: '1px solid #86efac' }}></div><span style={{ fontSize: 12 }}>Свободно</span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}><div style={{ width: 20, height: 20, borderRadius: 6, background: '#f5f5f5', border: '1px solid #ddd' }}></div><span style={{ fontSize: 12 }}>Занято</span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}><div style={{ width: 20, height: 20, borderRadius: 6, background: '#8b5cf6' }}></div><span style={{ fontSize: 12 }}>Выбрано</span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}><div style={{ width: 20, height: 20, borderRadius: 6, background: '#faf5ff', border: '1px solid #c084fc' }}></div><span style={{ fontSize: 12 }}>Бизнес</span></div>
       </div>
     </div>
   )

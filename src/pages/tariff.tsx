@@ -3,8 +3,14 @@ import { useState, useEffect } from 'react'
 import { useLanguage } from '@/context/LanguageContext'
 
 interface Tariff {
-  id: number; name: string; description: string; price: number
-  baggage: string; handLuggage: string; refundable: boolean; class: string
+  id: number
+  name: string
+  description: string
+  price: number
+  baggage: string
+  handLuggage: string
+  refundable: boolean
+  class: string
 }
 
 export default function TariffSelection() {
@@ -18,15 +24,25 @@ export default function TariffSelection() {
     if (!flightId) return
     fetch(`/api/flights/${flightId}/tariffs`)
       .then(res => res.json())
-      .then(data => { setTariffs(data); setLoading(false) })
+      .then(data => {
+        setTariffs(data)
+        setLoading(false)
+      })
   }, [flightId])
 
   const handleSelect = (tariff: Tariff) => {
     const query = { ...router.query, tariffId: tariff.id }
+
     if (router.query.tripType === 'roundtrip' && router.query.returnDate && !router.query.returnFlightId) {
-      router.push({ pathname: '/search-return', query })
+      router.push({
+        pathname: '/search-return',
+        query
+      })
     } else {
-      router.push({ pathname: '/overview', query })
+      router.push({
+        pathname: '/overview',
+        query
+      })
     }
   }
 
@@ -38,6 +54,7 @@ export default function TariffSelection() {
   return (
     <div className="card">
       <h2 className="card-title">{t.tariff.title}</h2>
+
       {economyTariffs.length > 0 && (
         <>
           <h3 style={{ marginBottom: 20, color: '#6b3fa0' }}>{t.tariff.economy}</h3>
@@ -51,14 +68,22 @@ export default function TariffSelection() {
                   <div><strong>🎒 {t.tariff.handLuggage}:</strong> {tariff.handLuggage}</div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: '#6b3fa0' }}>{tariff.price.toLocaleString()} ₽</div>
-                  <button className="btn btn-primary" onClick={() => handleSelect(tariff)}>{t.tariff.select} {tariff.price.toLocaleString()} ₽</button>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: '#6b3fa0' }}>
+                    {tariff.price.toLocaleString()} ₽
+                  </div>
+                  <button className="btn btn-primary" onClick={() => handleSelect(tariff)}>
+                    {t.tariff.select} {tariff.price.toLocaleString()} ₽
+                  </button>
+                </div>
+                <div style={{ marginTop: 10, fontSize: 12, color: tariff.refundable ? '#4caf50' : '#ff9800' }}>
+                  {tariff.refundable ? t.tariff.refundable : t.tariff.nonRefundable}
                 </div>
               </div>
             ))}
           </div>
         </>
       )}
+
       {businessTariffs.length > 0 && (
         <>
           <h3 style={{ margin: '30px 0 20px', color: '#7c3aed' }}>{t.tariff.business}</h3>
@@ -72,8 +97,15 @@ export default function TariffSelection() {
                   <div><strong>🎒 {t.tariff.handLuggage}:</strong> {tariff.handLuggage}</div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: '#7c3aed' }}>{tariff.price.toLocaleString()} ₽</div>
-                  <button className="btn btn-primary" onClick={() => handleSelect(tariff)}>{t.tariff.select} {tariff.price.toLocaleString()} ₽</button>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: '#7c3aed' }}>
+                    {tariff.price.toLocaleString()} ₽
+                  </div>
+                  <button className="btn btn-primary" onClick={() => handleSelect(tariff)}>
+                    {t.tariff.select} {tariff.price.toLocaleString()} ₽
+                  </button>
+                </div>
+                <div style={{ marginTop: 10, fontSize: 12, color: tariff.refundable ? '#4caf50' : '#ff9800' }}>
+                  {tariff.refundable ? t.tariff.refundable : t.tariff.nonRefundable}
                 </div>
               </div>
             ))}

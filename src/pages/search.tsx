@@ -38,49 +38,96 @@ export default function SearchResults() {
       })
   }, [router.isReady, router.query])
 
+  const formatTime = (dateStr: string) => {
+    const d = new Date(dateStr)
+    return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+  }
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr)
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'short', timeZone: 'UTC' })
+  }
+
   if (loading) {
-    return <div className="card"><p>Загрузка...</p></div>
+    return (
+      <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
+        <p style={{ fontSize: '18px', color: '#6b5b8a' }}>🔍 Ищем рейсы...</p>
+      </div>
+    )
   }
 
   if (error) {
     return (
-      <div className="card">
-        <p style={{ color: 'red' }}>Ошибка: {error}</p>
-        <button className="btn btn-outline" onClick={() => router.push('/')}>← Назад</button>
+      <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
+        <p style={{ color: 'red' }}>❌ {error}</p>
+        <button className="btn btn-outline" onClick={() => router.push('/')} style={{ marginTop: '15px' }}>← Назад к поиску</button>
       </div>
     )
   }
 
   if (flights.length === 0) {
     return (
-      <div className="card">
-        <p>Рейсы не найдены</p>
-        <button className="btn btn-outline" onClick={() => router.push('/')}>← Назад</button>
+      <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
+        <p style={{ fontSize: '18px', color: '#6b5b8a' }}>😕 Рейсы не найдены</p>
+        <p style={{ color: '#999' }}>Попробуйте изменить параметры поиска</p>
+        <button className="btn btn-outline" onClick={() => router.push('/')} style={{ marginTop: '15px' }}>← Назад к поиску</button>
       </div>
     )
   }
 
   return (
     <div>
-      <h1 className="card-title">Доступные рейсы ({flights.length})</h1>
-      
+      <h1 className="card-title">Доступные рейсы</h1>
+
       {flights.map((flight: any) => (
         <div key={flight.id} className="flight-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div>
-              <strong>{flight.flightNumber}</strong>
-              <br />
-              {flight.fromAirport?.city} → {flight.toAirport?.city}
-              <br />
-              {flight.departureTime && new Date(flight.departureTime).toLocaleString('ru-RU')}
-            </div>
-            <div>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: '#6b3fa0' }}>
-                {flight.tariffs?.[0]?.price ? `от ${flight.tariffs[0].price} ₽` : 'Цена не указана'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#6b3fa0' }}>
+                    {formatTime(flight.departureTime)}
+                  </div>
+                  <div style={{ fontSize: '16px', fontWeight: 600 }}>{flight.fromAirport?.city || '—'}</div>
+                  <div style={{ fontSize: '12px', color: '#999' }}>{flight.fromAirport?.iata}</div>
+                </div>
+
+                <div style={{ flex: 1, textAlign: 'center' }}>
+                  <div style={{ fontSize: '13px', color: '#999' }}>
+                    {Math.floor((flight.durationMin || 90) / 60)}ч {(flight.durationMin || 90) % 60}м
+                  </div>
+                  <div style={{ height: '2px', background: 'linear-gradient(to right, #c4b5fd, #8b5cf6)', margin: '5px 0' }}></div>
+                  <div style={{ fontSize: '11px', color: '#999' }}>✈ {flight.flightNumber}</div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#6b3fa0' }}>
+                    {formatTime(flight.arrivalTime)}
+                  </div>
+                  <div style={{ fontSize: '16px', fontWeight: 600 }}>{flight.toAirport?.city || '—'}</div>
+                  <div style={{ fontSize: '12px', color: '#999' }}>{flight.toAirport?.iata}</div>
+                </div>
               </div>
-              <button 
-                className="btn btn-primary btn-sm"
-                onClick={() => router.push(`/tariff?flightId=${flight.id}`)}
+
+              <div style={{ marginTop: '10px', fontSize: '13px', color: '#999' }}>
+                📅 {formatDate(flight.departureTime)}
+                &nbsp;|&nbsp; ✈ {flight.aircraft?.type || 'Boeing 737-800'}
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '22px', fontWeight: 700, color: '#6b3fa0', marginBottom: '10px' }}>
+                от {flight.tariffs?.[0]?.price?.toLocaleString() || '—'} ₽
+              </div>
+              <button
+                className="btn btn-primary"
+                onClick={() => router.push({
+                  pathname: '/tariff',
+                  query: {
+                    flightId: flight.id,
+                    ...router.query
+                  }
+                })}
               >
                 Выбрать
               </button>

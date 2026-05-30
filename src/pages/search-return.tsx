@@ -26,6 +26,7 @@ export default function SearchReturn() {
   return (
     <div>
       <h1 className="card-title">Обратный рейс</h1>
+      <p style={{ color: '#6b5b8a', marginBottom: 20 }}>Выберите рейс для возвращения</p>
       {flights.map((flight: any) => (
         <div key={flight.id} className="flight-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
@@ -46,7 +47,10 @@ export default function SearchReturn() {
                 </div>
               </div>
             </div>
-            <button className="btn btn-primary" onClick={() => router.push({ pathname: '/overview', query: { ...router.query, returnFlightId: flight.id } })}>Выбрать</button>
+            <button className="btn btn-primary" onClick={() => router.push({
+              pathname: '/seat-return',
+              query: { ...router.query, returnFlightId: flight.id }
+            })}>Выбрать</button>
           </div>
         </div>
       ))}

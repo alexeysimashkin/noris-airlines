@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { useLanguage } from '@/context/LanguageContext'
 
 export default function Home() {
   const { t } = useLanguage()
   const router = useRouter()
+  const [airports, setAirports] = useState<any[]>([])
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [departureDate, setDepartureDate] = useState('')
@@ -20,7 +21,13 @@ export default function Home() {
   const [showPassengers, setShowPassengers] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const totalPassengers = Object.values(passengers).reduce((a, b) => a + b, 0)
+  useEffect(() => {
+    fetch('/api/admin/airports')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setAirports(data)
+      })
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -31,6 +38,8 @@ export default function Home() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  const totalPassengers = Object.values(passengers).reduce((a, b) => a + b, 0)
 
   const handleSearch = () => {
     const params = new URLSearchParams()
@@ -79,92 +88,60 @@ export default function Home() {
         <div className="grid grid-2">
           <div className="form-group">
             <label className="form-label">{t.search.from}</label>
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="Москва (SVO)"
-              value={from}
-              onChange={e => setFrom(e.target.value)}
-            />
+            <select className="form-select" value={from} onChange={e => setFrom(e.target.value)}>
+              <option value="">Выберите город...</option>
+              {airports.map((a: any) => (
+                <option key={a.id} value={a.city}>{a.city} ({a.iata})</option>
+              ))}
+            </select>
           </div>
           <div className="form-group">
             <label className="form-label">{t.search.to}</label>
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="Санкт-Петербург (LED)"
-              value={to}
-              onChange={e => setTo(e.target.value)}
-            />
+            <select className="form-select" value={to} onChange={e => setTo(e.target.value)}>
+              <option value="">Выберите город...</option>
+              {airports.map((a: any) => (
+                <option key={a.id} value={a.city}>{a.city} ({a.iata})</option>
+              ))}
+            </select>
           </div>
           <div className="form-group">
             <label className="form-label">{t.search.departure}</label>
-            <input 
-              type="date" 
-              className="form-input"
-              value={departureDate}
-              onChange={e => setDepartureDate(e.target.value)}
-            />
+            <input type="date" className="form-input" value={departureDate} onChange={e => setDepartureDate(e.target.value)} />
           </div>
           <div className="form-group">
             <label className="form-label">{t.search.return}</label>
-            <input 
-              type="date" 
-              className="form-input"
-              value={returnDate}
-              onChange={e => setReturnDate(e.target.value)}
-              disabled={tripType === 'oneway'}
-            />
+            <input type="date" className="form-input" value={returnDate} onChange={e => setReturnDate(e.target.value)} disabled={tripType === 'oneway'} />
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-          <button 
-            className={`btn ${tripType === 'oneway' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setTripType('oneway')}
-          >
+          <button className={`btn ${tripType === 'oneway' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setTripType('oneway')}>
             ✈ {t.search.oneWay}
           </button>
-          <button 
-            className={`btn ${tripType === 'roundtrip' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setTripType('roundtrip')}
-          >
+          <button className={`btn ${tripType === 'roundtrip' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setTripType('roundtrip')}>
             ↔ {t.search.roundTrip}
           </button>
-          <button 
-            className="btn btn-outline btn-sm"
-            onClick={() => {
-              setFrom('')
-              setTo('')
-              setDepartureDate('')
-              setReturnDate('')
-              setTripType('oneway')
-              setPassengers({ adult: 1, child: 0, infantWithSeat: 0, infantNoSeat: 0, senior: 0 })
-            }}
-          >
+          <button className="btn btn-outline btn-sm" onClick={() => {
+            setFrom('')
+            setTo('')
+            setDepartureDate('')
+            setReturnDate('')
+            setTripType('oneway')
+            setPassengers({ adult: 1, child: 0, infantWithSeat: 0, infantNoSeat: 0, senior: 0 })
+          }}>
             ↺ {t.search.reset}
           </button>
         </div>
 
-        {/* Passenger Dropdown */}
         <div className="form-group" ref={dropdownRef}>
           <label className="form-label">{t.search.passengers}</label>
           <div className="passenger-dropdown">
-            <button 
-              type="button"
-              className="passenger-trigger"
-              onClick={() => setShowPassengers(!showPassengers)}
-            >
+            <button type="button" className="passenger-trigger" onClick={() => setShowPassengers(!showPassengers)}>
               <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>
-                  {totalPassengers} пассажир{totalPassengers > 1 ? (totalPassengers < 5 ? 'а' : 'ов') : ''}
-                </span>
-                <span style={{ fontSize: '12px', color: '#6b5b8a' }}>
-                  {showPassengers ? '▲' : '▼'}
-                </span>
+                <span>{totalPassengers} пассажир{totalPassengers > 1 ? (totalPassengers < 5 ? 'а' : 'ов') : ''}</span>
+                <span style={{ fontSize: '12px', color: '#6b5b8a' }}>{showPassengers ? '▲' : '▼'}</span>
               </span>
             </button>
-            
             {showPassengers && (
               <div className="passenger-menu">
                 {passengerTypes.map(type => (
@@ -174,21 +151,11 @@ export default function Home() {
                       <div className="passenger-item-desc">{type.desc}</div>
                     </div>
                     <div className="passenger-counter">
-                      <button 
-                        type="button"
-                        onClick={() => updatePassenger(type.key, -1)}
-                        disabled={passengers[type.key as keyof typeof passengers] <= 0}
-                      >
-                        −
-                      </button>
+                      <button type="button" onClick={() => updatePassenger(type.key, -1)}
+                        disabled={passengers[type.key as keyof typeof passengers] <= 0}>−</button>
                       <span>{passengers[type.key as keyof typeof passengers]}</span>
-                      <button 
-                        type="button"
-                        onClick={() => updatePassenger(type.key, 1)}
-                        disabled={passengers[type.key as keyof typeof passengers] >= 9}
-                      >
-                        +
-                      </button>
+                      <button type="button" onClick={() => updatePassenger(type.key, 1)}
+                        disabled={passengers[type.key as keyof typeof passengers] >= 9}>+</button>
                     </div>
                   </div>
                 ))}

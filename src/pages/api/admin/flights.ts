@@ -20,15 +20,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         tariffLight, tariffStandard, tariffBusinessValue, tariffBusinessEasy
       } = req.body
 
-      // НЕ преобразуем в Date — оставляем как строку ISO
+      // Преобразуем локальное время в UTC, вычитая часовой пояс
+      const departureDate = new Date(departureTime)
+      const arrivalDate = new Date(arrivalTime)
+      
+      // Получаем смещение часового пояса в минутах и компенсируем
+      const offsetMinutes = departureDate.getTimezoneOffset()
+      departureDate.setMinutes(departureDate.getMinutes() - offsetMinutes)
+      arrivalDate.setMinutes(arrivalDate.getMinutes() - offsetMinutes)
+
       const flight = await prisma.flight.create({
         data: {
           flightNumber,
           fromAirportId: Number(fromAirportId),
           toAirportId: Number(toAirportId),
           aircraftId: 1,
-          departureTime: departureTime + ':00.000Z', // Явно указываем UTC без сдвига
-          arrivalTime: arrivalTime + ':00.000Z',
+          departureTime: departureDate,
+          arrivalTime: arrivalDate,
           durationMin: 90,
           startDate: new Date(startDate),
           endDate: new Date(endDate),

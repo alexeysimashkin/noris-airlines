@@ -30,6 +30,22 @@ export default function TariffSelection() {
       })
   }, [flightId])
 
+  const handleSelect = (tariff: Tariff) => {
+    const query = { ...router.query, tariffId: tariff.id }
+
+    if (router.query.tripType === 'roundtrip' && router.query.returnDate) {
+      router.push({
+        pathname: '/search-return',
+        query
+      })
+    } else {
+      router.push({
+        pathname: '/overview',
+        query
+      })
+    }
+  }
+
   const economyTariffs = tariffs.filter(t => t.class === 'economy')
   const businessTariffs = tariffs.filter(t => t.class === 'business')
 
@@ -38,34 +54,24 @@ export default function TariffSelection() {
   return (
     <div className="card">
       <h2 className="card-title">{t.tariff.title}</h2>
-      
+
       {economyTariffs.length > 0 && (
         <>
-          <h3 style={{ marginBottom: '20px', color: '#1a3a5c' }}>{t.tariff.economy}</h3>
+          <h3 style={{ marginBottom: '20px', color: '#6b3fa0' }}>{t.tariff.economy}</h3>
           <div className="grid grid-2">
             {economyTariffs.map(tariff => (
-              <div key={tariff.id} className="card" style={{ border: '2px solid #e0e5ec' }}>
-                <h4 style={{ fontSize: '20px', color: '#1a3a5c', marginBottom: '10px' }}>{tariff.name}</h4>
+              <div key={tariff.id} className="card" style={{ border: '2px solid #e8e0f0' }}>
+                <h4 style={{ fontSize: '20px', color: '#6b3fa0', marginBottom: '10px' }}>{tariff.name}</h4>
                 <p style={{ color: '#666', marginBottom: '15px' }}>{tariff.description}</p>
                 <div style={{ display: 'flex', gap: '20px', marginBottom: '15px', fontSize: '14px' }}>
-                  <div>
-                    <strong>🧳 {t.tariff.baggage}:</strong> {tariff.baggage}
-                  </div>
-                  <div>
-                    <strong>🎒 {t.tariff.handLuggage}:</strong> {tariff.handLuggage}
-                  </div>
+                  <div><strong>🧳 {t.tariff.baggage}:</strong> {tariff.baggage}</div>
+                  <div><strong>🎒 {t.tariff.handLuggage}:</strong> {tariff.handLuggage}</div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#1a3a5c' }}>
+                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#6b3fa0' }}>
                     {tariff.price.toLocaleString()} ₽
                   </div>
-                  <button 
-                    className="btn btn-gold"
-                    onClick={() => router.push({
-                      pathname: '/overview',
-                      query: { ...router.query, tariffId: tariff.id }
-                    })}
-                  >
+                  <button className="btn btn-primary" onClick={() => handleSelect(tariff)}>
                     {t.tariff.select} {tariff.price.toLocaleString()} ₽
                   </button>
                 </div>
@@ -77,34 +83,24 @@ export default function TariffSelection() {
           </div>
         </>
       )}
-      
+
       {businessTariffs.length > 0 && (
         <>
-          <h3 style={{ margin: '30px 0 20px', color: '#c4a962' }}>{t.tariff.business}</h3>
+          <h3 style={{ margin: '30px 0 20px', color: '#7c3aed' }}>{t.tariff.business}</h3>
           <div className="grid grid-2">
             {businessTariffs.map(tariff => (
-              <div key={tariff.id} className="card" style={{ border: '2px solid #c4a962', background: 'linear-gradient(135deg, #fffb 0%, #f8f5e8 100%)' }}>
-                <h4 style={{ fontSize: '20px', color: '#1a3a5c', marginBottom: '10px' }}>✨ {tariff.name}</h4>
+              <div key={tariff.id} className="card" style={{ border: '2px solid #c4b5fd', background: 'linear-gradient(135deg, #faf8ff 0%, #f5f3ff 100%)' }}>
+                <h4 style={{ fontSize: '20px', color: '#6b3fa0', marginBottom: '10px' }}>✨ {tariff.name}</h4>
                 <p style={{ color: '#666', marginBottom: '15px' }}>{tariff.description}</p>
                 <div style={{ display: 'flex', gap: '20px', marginBottom: '15px', fontSize: '14px' }}>
-                  <div>
-                    <strong>🧳 {t.tariff.baggage}:</strong> {tariff.baggage}
-                  </div>
-                  <div>
-                    <strong>🎒 {t.tariff.handLuggage}:</strong> {tariff.handLuggage}
-                  </div>
+                  <div><strong>🧳 {t.tariff.baggage}:</strong> {tariff.baggage}</div>
+                  <div><strong>🎒 {t.tariff.handLuggage}:</strong> {tariff.handLuggage}</div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#c4a962' }}>
+                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#7c3aed' }}>
                     {tariff.price.toLocaleString()} ₽
                   </div>
-                  <button 
-                    className="btn btn-gold"
-                    onClick={() => router.push({
-                      pathname: '/overview',
-                      query: { ...router.query, tariffId: tariff.id }
-                    })}
-                  >
+                  <button className="btn btn-primary" onClick={() => handleSelect(tariff)}>
                     {t.tariff.select} {tariff.price.toLocaleString()} ₽
                   </button>
                 </div>

@@ -20,7 +20,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       departureDate.setMinutes(departureDate.getMinutes() - offsetMinutes)
       arrivalDate.setMinutes(arrivalDate.getMinutes() - offsetMinutes)
 
-      // Обновляем рейс
       const flight = await prisma.flight.update({
         where: { id: Number(id) },
         data: {
@@ -35,7 +34,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       })
 
-      // Удаляем старые тарифы и создаём новые
       await prisma.flightTariff.deleteMany({ where: { flightId: Number(id) } })
 
       await prisma.flightTariff.createMany({

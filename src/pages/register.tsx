@@ -1,19 +1,19 @@
 import { useState } from 'react'
-import { useRouter } from 'next/router'
 
 export default function Register() {
-  const router = useRouter()
   const [form, setForm] = useState({
     lastName: '', firstName: '', middleName: '',
     birthDate: '', gender: 'male', email: '', phone: '', password: ''
   })
   const [message, setMessage] = useState('')
+  const [verifyLink, setVerifyLink] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setMessage('')
+    setVerifyLink('')
 
     const res = await fetch('/api/auth/register', {
       method: 'POST',
@@ -22,6 +22,9 @@ export default function Register() {
     })
     const data = await res.json()
     setMessage(data.message)
+    if (data.verifyLink) {
+      setVerifyLink(data.verifyLink)
+    }
     setLoading(false)
   }
 
@@ -81,6 +84,14 @@ export default function Register() {
         {message && (
           <div style={{ padding: 12, borderRadius: 8, background: message.includes('успешна') ? '#f0fdf4' : '#fef2f2', color: message.includes('успешна') ? '#166534' : '#991b1b' }}>
             {message}
+          </div>
+        )}
+
+        {verifyLink && (
+          <div style={{ padding: 15, background: '#f0fdf4', borderRadius: 8, wordBreak: 'break-all' }}>
+            <p style={{ fontWeight: 600, color: '#166534', marginBottom: 8 }}>✅ Ссылка для подтверждения:</p>
+            <a href={verifyLink} style={{ color: '#6b3fa0', fontSize: 13 }} target="_blank">{verifyLink}</a>
+            <p style={{ fontSize: 12, color: '#999', marginTop: 8 }}>Нажмите на ссылку, затем войдите на странице входа</p>
           </div>
         )}
 

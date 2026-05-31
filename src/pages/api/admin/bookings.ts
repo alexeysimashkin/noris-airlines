@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      const { flightId, tariffId, email, firstName, lastName, phone, seat, meal } = req.body
+      const { flightId, tariffId, email, firstName, lastName, phone, seat, meal, departureDate } = req.body
 
       // Находим или создаём пассажира
       let passenger = await prisma.passenger.findFirst({ where: { email } })
@@ -38,11 +38,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         })
       }
 
-      // Получаем тариф для расчёта цены
+      // Получаем тариф
       const tariff = await prisma.flightTariff.findUnique({ where: { id: Number(tariffId) } })
       let totalPrice = tariff?.price || 0
 
-      // Генерируем код бронирования
+      // Получаем рейс
+      const flight = await prisma.flight.findUnique({ where: { id: Number(flightId) } })
+      if (!flight) return res.json({ error: 'Рейс не найден' })
+
+      // Дата вылета
+      const bookingDepartureDate = departureDate ? new Date(departureDate) : new Date(flight.departureTime)
+
+      // Код бронирования
       const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
       const numbers = '0123456789'
       let code = ''
@@ -58,6 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           tariffId: Number(tariffId),
           totalPrice,
           status: 'confirmed',
+          createdAt: bookingDepartureDate,
           passengers: {
             create: { passengerId: passenger.id }
           }

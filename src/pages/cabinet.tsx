@@ -47,17 +47,21 @@ export default function Cabinet() {
   }
 
   if (loading) {
-    return <div className="card" style={{ textAlign: 'center', padding: 40 }}>
-      <p style={{ fontSize: 18, color: '#6b5b8a' }}>Загрузка бронирований...</p>
-    </div>
+    return (
+      <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+        <p style={{ fontSize: 18, color: '#6b5b8a' }}>Загрузка бронирований...</p>
+      </div>
+    )
   }
 
   if (error) {
-    return <div className="card" style={{ textAlign: 'center', padding: 40 }}>
-      <p style={{ color: 'red' }}>Ошибка: {error}</p>
-      <button className="btn btn-outline" onClick={() => router.push('/')}>На главную</button>
-    </div>
-  )
+    return (
+      <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+        <p style={{ color: 'red' }}>Ошибка: {error}</p>
+        <button className="btn btn-outline" onClick={() => router.push('/')}>На главную</button>
+      </div>
+    )
+  }
 
   return (
     <div>

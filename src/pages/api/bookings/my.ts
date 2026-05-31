@@ -13,22 +13,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const bookings = await prisma.booking.findMany({
       where: {
-        OR: [
-          {
-            passengers: {
-              some: {
-                passenger: {
-                  email: { equals: email as string, mode: 'insensitive' }
-                }
-              }
-            }
-          },
-          {
-            user: {
+        passengers: {
+          some: {
+            passenger: {
               email: { equals: email as string, mode: 'insensitive' }
             }
           }
-        ]
+        }
       },
       include: {
         flight: {

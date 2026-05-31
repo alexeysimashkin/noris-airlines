@@ -39,12 +39,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     })
 
-    // Отправляем реальное письмо через Resend
     const resend = new Resend(process.env.RESEND_API_KEY)
-    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://noris.vercel.app'
 
-    await resend.emails.send({
-      from: 'Noris Airlines <noreply@noris-airlines.ru>',
+    const { data, error } = await resend.emails.send({
+      from: 'Noris Airlines <onboarding@resend.dev>',
       to: email,
       subject: 'Подтверждение регистрации — Noris Airlines',
       html: `
@@ -62,8 +61,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `
     })
 
+    if (error) {
+      console.error('Resend error:', error)
+      return res.json({ success: false, message: 'Ошибка отправки письма: ' + error.message })
+    }
+
     res.json({ success: true, message: 'Регистрация успешна! Проверьте почту для подтверждения.' })
   } catch (e: any) {
+    console.error('Register error:', e)
     res.json({ success: false, message: e.message })
   } finally {
     await prisma.$disconnect()

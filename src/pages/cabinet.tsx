@@ -10,7 +10,7 @@ export default function Cabinet() {
 
   useEffect(() => {
     const stored = localStorage.getItem('user')
-    
+
     if (!stored) {
       router.push('/login')
       return
@@ -51,7 +51,7 @@ export default function Cabinet() {
 
   if (error) {
     return <div className="card" style={{ textAlign: 'center', padding: 40 }}><p style={{ color: 'red' }}>{error}</p></div>
-  )
+  }
 
   return (
     <div>

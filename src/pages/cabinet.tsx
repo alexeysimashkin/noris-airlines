@@ -6,6 +6,7 @@ export default function Cabinet() {
   const [user, setUser] = useState<any>(null)
   const [bookings, setBookings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     const stored = localStorage.getItem('user')
@@ -17,10 +18,20 @@ export default function Cabinet() {
     const userData = JSON.parse(stored)
     setUser(userData)
 
-    fetch(`/api/bookings/my?email=${userData.email}`)
+    fetch(`/api/bookings/my?email=${encodeURIComponent(userData.email)}`)
       .then(res => res.json())
       .then(data => {
-        setBookings(Array.isArray(data) ? data : [])
+        if (Array.isArray(data)) {
+          setBookings(data)
+        } else if (data.error) {
+          setError(data.error)
+        } else {
+          setBookings([])
+        }
+        setLoading(false)
+      })
+      .catch(e => {
+        setError(e.message)
         setLoading(false)
       })
   }, [])
@@ -35,7 +46,18 @@ export default function Cabinet() {
     return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
   }
 
-  if (loading) return <div className="card"><p>Загрузка...</p></div>
+  if (loading) {
+    return <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+      <p style={{ fontSize: 18, color: '#6b5b8a' }}>Загрузка бронирований...</p>
+    </div>
+  }
+
+  if (error) {
+    return <div className="card" style={{ textAlign: 'center', padding: 40 }}>
+      <p style={{ color: 'red' }}>Ошибка: {error}</p>
+      <button className="btn btn-outline" onClick={() => router.push('/')}>На главную</button>
+    </div>
+  )
 
   return (
     <div>
@@ -65,36 +87,19 @@ export default function Cabinet() {
               <div>
                 <div style={{ fontSize: 12, color: '#999' }}>Код: <strong>{booking.bookingCode}</strong></div>
                 <div style={{ fontSize: 18, fontWeight: 600, color: '#6b3fa0', marginTop: 5 }}>
-                  {booking.flight.fromAirport?.city} → {booking.flight.toAirport?.city}
+                  {booking.flight?.fromAirport?.city} → {booking.flight?.toAirport?.city}
                 </div>
                 <div style={{ fontSize: 14, color: '#666', marginTop: 5 }}>
-                  {formatDate(booking.flight.departureTime)} • {formatTime(booking.flight.departureTime)}
+                  {booking.flight?.departureTime && formatDate(booking.flight.departureTime)}
+                  {' • '}
+                  {booking.flight?.departureTime && formatTime(booking.flight.departureTime)}
                 </div>
                 <div style={{ fontSize: 13, color: '#999', marginTop: 3 }}>
-                  Рейс {booking.flight.flightNumber} • {booking.tariff.name}
+                  Рейс {booking.flight?.flightNumber} • {booking.tariff?.name}
                 </div>
-
-                {booking.returnFlight && (
-                  <div style={{ marginTop: 8, padding: 8, background: '#f5f3ff', borderRadius: 8, fontSize: 13 }}>
-                    🔙 Обратно: {booking.returnFlight.fromAirport?.city} → {booking.returnFlight.toAirport?.city}
-                    <br />{formatDate(booking.returnFlight.departureTime)} • {formatTime(booking.returnFlight.departureTime)}
-                  </div>
-                )}
               </div>
-
               <div style={{ textAlign: 'right' }}>
-                <div style={{
-                  padding: '6px 12px',
-                  borderRadius: 20,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  display: 'inline-block',
-                  background: booking.status === 'confirmed' ? '#f0fdf4' : booking.status === 'refunded' ? '#fef2f2' : '#fff7ed',
-                  color: booking.status === 'confirmed' ? '#166534' : booking.status === 'refunded' ? '#991b1b' : '#c2410c'
-                }}>
-                  {booking.status === 'confirmed' ? '✅ Активно' : booking.status === 'refunded' ? '↩ Возврат' : booking.status}
-                </div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#6b3fa0', marginTop: 10 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#6b3fa0' }}>
                   {booking.totalPrice?.toLocaleString()} ₽
                 </div>
                 <button className="btn btn-sm btn-outline" style={{ marginTop: 10 }}

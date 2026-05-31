@@ -11,13 +11,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!email) return res.json([])
 
   try {
+    // Ищем пассажиров с таким email
+    const passengers = await prisma.passenger.findMany({
+      where: {
+        email: { equals: email as string, mode: 'insensitive' }
+      },
+      select: { id: true }
+    })
+
+    const passengerIds = passengers.map(p => p.id)
+
+    // Ищем бронирования этих пассажиров
     const bookings = await prisma.booking.findMany({
       where: {
         passengers: {
           some: {
-            passenger: {
-              email: { equals: email as string, mode: 'insensitive' }
-            }
+            passengerId: { in: passengerIds }
           }
         }
       },
@@ -36,11 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
         },
         seats: true,
-        meals: {
-          include: {
-            meal: true
-          }
-        },
+        meals: { include: { meal: true } },
         baggage: true,
         payment: true,
         returnFlight: {
@@ -56,7 +61,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.json(bookings)
   } catch (e: any) {
-    console.error('Bookings error:', e)
     return res.status(500).json({ error: e.message })
   } finally {
     await prisma.$disconnect()

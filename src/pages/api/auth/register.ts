@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client'
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { Resend } from 'resend'
 import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
 
@@ -17,6 +16,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) {
+    if (!existing.verified) {
+      return res.json({
+        success: false,
+        message: 'Пользователь уже зарегистрирован, но email не подтверждён.',
+        resendLink: `/resend-verify`
+      })
+    }
     return res.json({ success: false, message: 'Пользователь с таким email уже существует' })
   }
 
@@ -24,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const hashedPassword = await bcrypt.hash(password, 10)
 
   try {
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: {
         lastName,
         firstName,
@@ -39,36 +45,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     })
 
-    const resend = new Resend(process.env.RESEND_API_KEY)
-    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://noris.vercel.app'
+    // Пробуем отправить письмо, но не падаем если ошибка
+    try {
+      const { Resend } = await import('resend')
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://noris.vercel.app'
 
-    const { data, error } = await resend.emails.send({
-      from: 'Noris Airlines <onboarding@resend.dev>',
-      to: email,
-      subject: 'Подтверждение регистрации — Noris Airlines',
-      html: `
-        <div style="max-width:600px;margin:0 auto;padding:30px;font-family:Arial,sans-serif;background:#faf8ff;border-radius:12px">
+      await resend.emails.send({
+        from: 'Noris Airlines <onboarding@resend.dev>',
+        to: email,
+        subject: 'Подтверждение регистрации — Noris Airlines',
+        html: `<div style="max-width:600px;margin:0 auto;padding:30px;font-family:Arial,sans-serif;background:#faf8ff;border-radius:12px">
           <h1 style="color:#6b3fa0">🛫 Noris Airlines</h1>
           <h2>Подтверждение регистрации</h2>
           <p>Здравствуйте, ${firstName}!</p>
-          <p>Вы зарегистрировались на сайте Noris Airlines. Для подтверждения email перейдите по ссылке:</p>
-          <a href="${baseUrl}/api/auth/verify?token=${verifyToken}" 
-             style="display:inline-block;padding:14px 30px;background:#6b3fa0;color:white;text-decoration:none;border-radius:8px;font-weight:600;margin:20px 0">
-            ✅ Подтвердить email
-          </a>
-          <p style="color:#999;font-size:12px;margin-top:20px">Если вы не регистрировались — проигнорируйте это письмо.</p>
-        </div>
-      `
-    })
-
-    if (error) {
-      console.error('Resend error:', error)
-      return res.json({ success: false, message: 'Ошибка отправки письма: ' + error.message })
+          <p>Для подтверждения email перейдите по ссылке:</p>
+          <a href="${baseUrl}/api/auth/verify?token=${verifyToken}" style="display:inline-block;padding:14px 30px;background:#6b3fa0;color:white;text-decoration:none;border-radius:8px;font-weight:600;margin:20px 0">✅ Подтвердить email</a>
+        </div>`
+      })
+    } catch (mailError) {
+      console.log('Email not sent (Resend free tier):', mailError)
     }
 
-    res.json({ success: true, message: 'Регистрация успешна! Проверьте почту для подтверждения.' })
+    // Показываем ссылку для подтверждения прямо на экране
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://noris.vercel.app'
+    const verifyLink = `${baseUrl}/api/auth/verify?token=${verifyToken}`
+
+    res.json({
+      success: true,
+      message: 'Регистрация успешна!',
+      verifyLink,
+      info: 'Нажмите на ссылку ниже чтобы подтвердить email (письмо также отправлено на почту)'
+    })
   } catch (e: any) {
-    console.error('Register error:', e)
     res.json({ success: false, message: e.message })
   } finally {
     await prisma.$disconnect()

@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import LanguageSwitcher from './LanguageSwitcher'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null)
@@ -12,32 +11,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <div className="header-top">
-        <div className="container" style={{ display: 'flex', justifyContent: 'flex-end', gap: 20 }}>
-          <a href="#">Aeroflot Bonus</a>
-          <a href="#">Статус рейса</a>
-          <a href="#">Помощь</a>
-        </div>
-      </div>
       <header className="header">
         <div className="container header-content">
           <Link href="/" className="logo">
-            <div className="logo-icon">✈</div>
-            NORIS
+            <div className="logo-mark">N</div>
+            Noris
           </Link>
-          <nav style={{ display: 'flex', gap: 4 }}>
-            <Link href="/check-in" className="nav-link">Регистрация</Link>
-            <Link href="/booking" className="nav-link">Бронирования</Link>
+          <nav className="nav">
+            <Link href="/check-in">Регистрация</Link>
+            <Link href="/booking">Бронирования</Link>
             {user ? (
-              <Link href="/cabinet" className="user-btn">👤 {user.firstName}</Link>
+              <Link href="/cabinet" className="btn btn-primary btn-sm">👤 {user.firstName}</Link>
             ) : (
-              <Link href="/login" className="user-btn">Войти</Link>
+              <Link href="/login" className="btn btn-outline btn-sm">Войти</Link>
             )}
-            <LanguageSwitcher />
           </nav>
         </div>
       </header>
-      <main>{children}</main>
+      <main className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
+        {children}
+      </main>
     </>
   )
 }

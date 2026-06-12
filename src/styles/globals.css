@@ -155,7 +155,7 @@ body {
   margin-bottom: 32px;
 }
 
-/* Search card — как у Utair/Aeroflot */
+/* Search card */
 .search-wrapper {
   max-width: 860px;
   margin: 0 auto 60px;
@@ -199,15 +199,18 @@ body {
 
 .search-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 160px;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   gap: 12px;
-  align-items: end;
+  align-items: start;
 }
 
 @media (max-width: 860px) {
+  .search-grid { grid-template-columns: 1fr 1fr 1fr; }
+}
+@media (max-width: 600px) {
   .search-grid { grid-template-columns: 1fr 1fr; }
 }
-@media (max-width: 500px) {
+@media (max-width: 400px) {
   .search-grid { grid-template-columns: 1fr; }
 }
 

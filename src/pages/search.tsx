@@ -19,16 +19,17 @@ export default function SearchResults() {
 
   if (loading) return (
     <div style={{ paddingTop: 20 }}>
-      <div className="skeleton" style={{ height: 100, marginBottom: 10 }}></div>
-      <div className="skeleton" style={{ height: 100, marginBottom: 10 }}></div>
-      <div className="skeleton" style={{ height: 100 }}></div>
+      <div className="skeleton" style={{ height: 90, marginBottom: 10, borderRadius: 16 }}></div>
+      <div className="skeleton" style={{ height: 90, marginBottom: 10, borderRadius: 16 }}></div>
+      <div className="skeleton" style={{ height: 90, borderRadius: 16 }}></div>
     </div>
   )
 
   if (flights.length === 0) return (
-    <div className="card" style={{ textAlign: 'center', padding: 40 }}>
-      <p style={{ fontSize: 16, color: 'var(--text-secondary)' }}>Рейсы не найдены</p>
-      <button className="btn btn-outline" style={{ marginTop: 12 }} onClick={() => router.push('/')}>Назад к поиску</button>
+    <div className="card" style={{ textAlign: 'center', padding: 48 }}>
+      <p style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-secondary)' }}>Рейсы не найдены</p>
+      <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '4px 0 16px' }}>Попробуйте изменить параметры поиска</p>
+      <button className="btn btn-outline" onClick={() => router.push('/')}>Назад к поиску</button>
     </div>
   )
 
@@ -45,7 +46,7 @@ export default function SearchResults() {
             </div>
             <div className="flight-route">
               <div className="flight-route-line"></div>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{Math.floor((f.durationMin||90)/60)}ч{(f.durationMin||90)%60}м</span>
+              <div className="flight-route-duration">{Math.floor((f.durationMin||90)/60)}ч {(f.durationMin||90)%60}м</div>
               <div className="flight-route-line"></div>
             </div>
             <div>
@@ -53,10 +54,10 @@ export default function SearchResults() {
               <div className="flight-city">{f.toAirport?.city}</div>
               <div className="flight-iata">{f.toAirport?.iata}</div>
             </div>
-            <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+            <div className="flight-price-block" style={{ marginLeft: 'auto' }}>
               <div className="flight-price">от {f.tariffs?.[0]?.price?.toLocaleString() || '—'} ₽</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{f.flightNumber} • {f.aircraft?.type}</div>
-              <button className="btn btn-primary btn-sm" style={{ marginTop: 8 }}
+              <div className="flight-meta">{f.flightNumber} • {f.aircraft?.type}</div>
+              <button className="btn btn-primary btn-sm"
                 onClick={() => router.push({ pathname: '/tariff', query: { flightId: f.id, ...router.query } })}>
                 Выбрать
               </button>

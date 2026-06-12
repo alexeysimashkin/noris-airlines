@@ -21,7 +21,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const { flightId, tariffId, email, firstName, lastName, phone, seat, meal, departureDate } = req.body
 
-      // Находим или создаём пассажира
       let passenger = await prisma.passenger.findFirst({ where: { email } })
       if (!passenger) {
         passenger = await prisma.passenger.create({
@@ -38,18 +37,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         })
       }
 
-      // Получаем тариф
       const tariff = await prisma.flightTariff.findUnique({ where: { id: Number(tariffId) } })
       let totalPrice = tariff?.price || 0
 
-      // Получаем рейс
       const flight = await prisma.flight.findUnique({ where: { id: Number(flightId) } })
       if (!flight) return res.json({ error: 'Рейс не найден' })
 
-      // Дата вылета
+      // Используем дату, выбранную пассажиром
       const bookingDepartureDate = departureDate ? new Date(departureDate) : new Date(flight.departureTime)
 
-      // Код бронирования
       const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
       const numbers = '0123456789'
       let code = ''
@@ -72,7 +68,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       })
 
-      // Место
       if (seat) {
         await prisma.bookingSeat.create({
           data: { bookingId: booking.id, passengerId: passenger.id, seatNumber: seat, price: 700 }
@@ -81,7 +76,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         await prisma.booking.update({ where: { id: booking.id }, data: { totalPrice } })
       }
 
-      // Питание
       if (meal) {
         const mealData = await prisma.meal.findUnique({ where: { id: Number(meal) } })
         if (mealData) {

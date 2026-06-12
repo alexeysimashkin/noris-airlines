@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react'
 
 export default function FinalOverview() {
   const router = useRouter()
-  const { flightId, tariffId, seats, baggage, meals, passengers } = router.query
+  const { flightId, tariffId, returnFlightId, seats, returnSeats, baggage, returnBaggage, meals, returnMeals, passengers } = router.query
   const [data, setData] = useState<any>(null)
+  const [returnData, setReturnData] = useState<any>(null)
   const [totalPrice, setTotalPrice] = useState(0)
   const [loading, setLoading] = useState(true)
 
@@ -18,128 +19,93 @@ export default function FinalOverview() {
           fetch(`/api/tariffs/${tariffId}`),
           fetch('/api/meals')
         ])
-
         const flight = await flightRes.json()
         const tariff = await tariffRes.json()
         const allMeals = await mealsRes.json()
 
-        let price = tariff.price || 0
-
-        if (seats && tariff.class === 'economy') {
-          const freeRows = tariff.freeSeatRows?.split(',').map(Number) || []
-          const selectedSeat = (seats as string).split(',')[0]
-          const seatRow = parseInt(selectedSeat)
-          if (!freeRows.includes(seatRow) && selectedSeat) {
-            const seatPrice = 700 * (1 - (tariff.seatDiscount || 0) / 100)
-            price += seatPrice
-          }
+        let returnFlight = null
+        if (returnFlightId) {
+          const returnRes = await fetch(`/api/flights/${returnFlightId}`)
+          returnFlight = await returnRes.json()
         }
 
-        const selectedBaggage = baggage ? (baggage as string).split(',').filter(Boolean) : []
-        if (selectedBaggage.includes('baggage23')) price += 2500
-        if (selectedBaggage.includes('baggage30')) price += 3500
-        if (selectedBaggage.includes('sport')) price += 3000
-
-        const selectedMeals = meals ? (meals as string).split(',').filter(Boolean) : []
-        selectedMeals.forEach(mealId => {
-          const meal = allMeals.find((m: any) => m.id === Number(mealId))
-          if (meal) price += meal.price
-        })
-
+        let price = tariff.price || 0
         const passengerList = passengers ? JSON.parse(passengers as string) : []
-        const total = price * (passengerList.length || 1)
 
-        setTotalPrice(total)
+        // Места туда
+        if (seats && tariff.class === 'economy') {
+          const freeRows = tariff.freeSeatRows?.split(',').map(Number) || []
+          const seat = (seats as string).split(',')[0]
+          const seatRow = parseInt(seat)
+          if (!freeRows.includes(seatRow) && seat) price += 700 * (1 - (tariff.seatDiscount || 0) / 100)
+        }
+        // Места обратно
+        if (returnSeats && tariff.class === 'economy') price += 700
+
+        // Багаж туда
+        const bag = baggage ? (baggage as string).split(',').filter(Boolean) : []
+        if (bag.includes('baggage23')) price += 2500
+        if (bag.includes('baggage30')) price += 3500
+        if (bag.includes('sport')) price += 3000
+        // Багаж обратно
+        const bagR = returnBaggage ? (returnBaggage as string).split(',').filter(Boolean) : []
+        if (bagR.includes('baggage23')) price += 2500
+        if (bagR.includes('baggage30')) price += 3500
+        if (bagR.includes('sport')) price += 3000
+
+        // Питание туда и обратно
+        const ml = meals ? (meals as string).split(',').filter(Boolean) : []
+        const mlR = returnMeals ? (returnMeals as string).split(',').filter(Boolean) : []
+        for (const id of [...ml, ...mlR]) {
+          const meal = allMeals.find((m: any) => m.id === Number(id))
+          if (meal) price += meal.price
+        }
+
+        setTotalPrice(price * (passengerList.length || 1))
         setData({ flight, tariff })
+        setReturnData(returnFlight)
         setLoading(false)
       } catch (e) {
         console.error(e)
         setLoading(false)
       }
     }
-
     fetchData()
-  }, [router.isReady, flightId, tariffId, seats, baggage, meals, passengers])
-
-  const formatTime = (dateStr: string) => {
-    const d = new Date(dateStr)
-    return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
-  }
+  }, [router.isReady, flightId, tariffId, returnFlightId, seats, returnSeats, baggage, returnBaggage, meals, returnMeals, passengers])
 
   if (loading) return <div className="card"><p>Загрузка...</p></div>
-  if (!data) return <div className="card"><p>Ошибка загрузки данных</p></div>
+  if (!data) return <div className="card"><p>Ошибка</p></div>
 
   const { flight, tariff } = data
   const passengerList = passengers ? JSON.parse(passengers as string) : []
 
-  const handlePay = () => {
-    router.push({
-      pathname: '/payment',
-      query: { ...router.query, totalPrice: String(totalPrice) }
-    })
-  }
-
   return (
     <div className="card">
       <h2 className="card-title">Обзор заказа</h2>
-
-      <div style={{ display: 'grid', gap: '12px' }}>
-        <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '10px' }}>
-          <strong>🛫 Рейс:</strong> {flight.flightNumber}
-          <div style={{ color: '#666', marginTop: '4px' }}>
-            {flight.fromAirport?.city} → {flight.toAirport?.city}
-            &nbsp;|&nbsp;
-            {new Date(flight.departureTime).toLocaleDateString('ru-RU', { timeZone: 'UTC' })}
-            &nbsp;
-            {formatTime(flight.departureTime)}
-          </div>
+      <div style={{ display: 'grid', gap: 10 }}>
+        <div style={{ padding: 12, background: '#f8f9fa', borderRadius: 10 }}>
+          <strong>🛫 Рейс туда:</strong> {flight.flightNumber} — {flight.fromAirport?.city} → {flight.toAirport?.city}
+          <br />{new Date(flight.departureTime).toLocaleString('ru-RU', { timeZone: 'UTC' })}
         </div>
-
-        <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '10px' }}>
-          <strong>💰 Тариф:</strong> {tariff.name} — {tariff.price?.toLocaleString()} ₽
-        </div>
-
-        {seats && (
-          <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '10px' }}>
-            <strong>💺 Место:</strong> {(seats as string).split(',').join(', ')}
+        {returnData && (
+          <div style={{ padding: 12, background: '#f5f3ff', borderRadius: 10 }}>
+            <strong>🛬 Рейс обратно:</strong> {returnData.flightNumber} — {returnData.fromAirport?.city} → {returnData.toAirport?.city}
+            <br />{new Date(returnData.departureTime).toLocaleString('ru-RU', { timeZone: 'UTC' })}
           </div>
         )}
-
-        {baggage && (
-          <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '10px' }}>
-            <strong>🧳 Багаж:</strong> {(baggage as string).split(',').filter(Boolean).join(', ')}
-          </div>
-        )}
-
-        {meals && (
-          <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '10px' }}>
-            <strong>🍽️ Питание:</strong> выбрано
-          </div>
-        )}
-
-        <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '10px' }}>
-          <strong>👥 Пассажиры:</strong> {passengerList.length}
-          {passengerList.map((p: any, i: number) => (
-            <div key={i} style={{ fontSize: '13px', color: '#666' }}>
-              {p.lastName} {p.firstName}
-            </div>
-          ))}
-        </div>
-
-        <div style={{
-          padding: '20px',
-          background: 'linear-gradient(135deg, #6b3fa0, #8b5cf6)',
-          color: 'white',
-          borderRadius: '12px',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '16px', opacity: 0.9 }}>Итого к оплате</div>
-          <div style={{ fontSize: '36px', fontWeight: 700 }}>{totalPrice.toLocaleString()} ₽</div>
+        <div style={{ padding: 12, background: '#f8f9fa', borderRadius: 10 }}><strong>💰 Тариф:</strong> {tariff.name} — {tariff.price?.toLocaleString()} ₽</div>
+        {seats && <div style={{ padding: 12, background: '#f8f9fa', borderRadius: 10 }}><strong>💺 Место туда:</strong> {(seats as string).split(',')[0]}</div>}
+        {returnSeats && <div style={{ padding: 12, background: '#f8f9fa', borderRadius: 10 }}><strong>💺 Место обратно:</strong> {(returnSeats as string).split(',')[0]}</div>}
+        {baggage && <div style={{ padding: 12, background: '#f8f9fa', borderRadius: 10 }}><strong>🧳 Багаж туда</strong></div>}
+        {returnBaggage && <div style={{ padding: 12, background: '#f8f9fa', borderRadius: 10 }}><strong>🧳 Багаж обратно</strong></div>}
+        <div style={{ padding: 12, background: '#f8f9fa', borderRadius: 10 }}><strong>👥 Пассажиры:</strong> {passengerList.length}</div>
+        <div style={{ padding: 18, background: 'var(--primary)', color: 'white', borderRadius: 12, textAlign: 'center' }}>
+          <div style={{ fontSize: 14, opacity: 0.8 }}>Итого</div>
+          <div style={{ fontSize: 32, fontWeight: 800 }}>{totalPrice.toLocaleString()} ₽</div>
         </div>
       </div>
-
-      <button className="btn btn-primary" style={{ marginTop: '20px', width: '100%', fontSize: '18px', padding: '16px' }}
-        onClick={handlePay}>
+      <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 16 }}
+        onClick={() => router.push({ pathname: '/payment', query: { ...router.query, totalPrice: String(totalPrice) } })}>
         💳 Оплатить
       </button>
     </div>

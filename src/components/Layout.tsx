@@ -12,16 +12,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <header className="header">
-        <div className="container header-content">
+        <div className="container header-inner">
           <Link href="/" className="logo">
-            <div className="logo-mark">N</div>
+            <div className="logo-icon">N</div>
             Noris
           </Link>
           <nav className="nav">
             <Link href="/check-in">Регистрация</Link>
             <Link href="/booking">Бронирования</Link>
             {user ? (
-              <Link href="/cabinet" className="btn btn-primary btn-sm">👤 {user.firstName}</Link>
+              <Link href="/cabinet" className="btn btn-primary btn-sm">{user.firstName}</Link>
             ) : (
               <Link href="/login" className="btn btn-outline btn-sm">Войти</Link>
             )}

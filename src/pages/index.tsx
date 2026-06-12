@@ -35,14 +35,13 @@ export default function Home() {
 
   return (
     <>
-      <section className="hero-section">
-        <div className="hero-content container">
-          <h1 className="hero-title">Поиск авиабилетов</h1>
-          <p className="hero-subtitle">Noris Airlines — летайте с комфортом</p>
-        </div>
-      </section>
+      <div className="hero">
+        <div className="hero-badge">🛫 Премиум-авиакомпания</div>
+        <h1 className="hero-title">Откройте мир<br />с Noris Airlines</h1>
+        <p className="hero-subtitle">Изысканные путешествия по России и миру — ваш комфорт наш приоритет</p>
+      </div>
 
-      <div className="container search-section">
+      <div className="container">
         <div className="search-card">
           <div className="search-tabs">
             <button className={`search-tab ${tripType === 'oneway' ? 'active' : ''}`} onClick={() => setTripType('oneway')}>✈ В одну сторону</button>
@@ -72,20 +71,35 @@ export default function Home() {
               <label className="form-label">Обратно</label>
               <input type="date" className="form-input" value={returnDate} onChange={e => setReturnDate(e.target.value)} disabled={tripType === 'oneway'} />
             </div>
-            <div className="form-group" ref={ddRef}>
+            <div className="form-group" ref={ddRef} style={{ position: 'relative' }}>
               <label className="form-label">Пассажиры</label>
-              <button type="button" className="form-input" style={{ textAlign: 'left', cursor: 'pointer' }} onClick={() => setShowPassengers(!showPassengers)}>
-                {total} {total === 1 ? 'пассажир' : 'пассажира'} {showPassengers ? '▲' : '▼'}
+              <button type="button" className="form-input" style={{ textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}
+                onClick={() => setShowPassengers(!showPassengers)}>
+                <span>{total} {total === 1 ? 'пассажир' : total < 5 ? 'пассажира' : 'пассажиров'}</span>
+                <span>{showPassengers ? '▲' : '▼'}</span>
               </button>
               {showPassengers && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid #e5e7eb', borderRadius: 8, padding: 8, boxShadow: 'var(--shadow-lg)', zIndex: 50 }}>
-                  {['adult','child','infantWithSeat','infantNoSeat','senior'].map(k => (
-                    <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 8px' }}>
-                      <span style={{ fontWeight: 600, fontSize: 13 }}>{k === 'adult' ? 'Взрослый' : k === 'child' ? 'Ребёнок' : k === 'infantWithSeat' ? 'Младенец с местом' : k === 'infantNoSeat' ? 'Младенец без места' : 'Пенсионер'}</span>
-                      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                        <button onClick={() => setPassengers(p => ({...p, [k]: Math.max(0, p[k as keyof typeof p] - 1)}))} style={{ border: '1px solid #ddd', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', background: 'white' }}>−</button>
-                        <span style={{ fontWeight: 700 }}>{passengers[k as keyof typeof passengers]}</span>
-                        <button onClick={() => setPassengers(p => ({...p, [k]: Math.min(9, p[k as keyof typeof p] + 1)}))} style={{ border: '1px solid #ddd', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', background: 'white' }}>+</button>
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid rgba(192,132,252,0.15)', borderRadius: 14, padding: 8, boxShadow: 'var(--shadow-xl)', zIndex: 50, marginTop: 4 }}>
+                  {[
+                    { key: 'adult', label: 'Взрослый (12+)', desc: '' },
+                    { key: 'child', label: 'Ребёнок (2–11)', desc: '' },
+                    { key: 'infantWithSeat', label: 'Младенец с местом', desc: 'до 2 лет' },
+                    { key: 'infantNoSeat', label: 'Младенец без места', desc: 'до 2 лет' },
+                    { key: 'senior', label: 'Пенсионер (57+)', desc: 'скидка 10%' },
+                  ].map(t => (
+                    <div key={t.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 10px', borderRadius: 10 }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>{t.label}</div>
+                        {t.desc && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.desc}</div>}
+                      </div>
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <button onClick={() => setPassengers(p => ({...p, [t.key]: Math.max(0, p[t.key as keyof typeof p] - 1)}))}
+                          style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid rgba(192,132,252,0.2)', background: 'white', cursor: 'pointer', fontWeight: 700, color: 'var(--primary)', fontSize: 18 }}
+                          disabled={passengers[t.key as keyof typeof passengers] <= 0}>−</button>
+                        <span style={{ fontWeight: 700, fontSize: 16, minWidth: 24, textAlign: 'center' }}>{passengers[t.key as keyof typeof passengers]}</span>
+                        <button onClick={() => setPassengers(p => ({...p, [t.key]: Math.min(9, p[t.key as keyof typeof p] + 1)}))}
+                          style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid rgba(192,132,252,0.2)', background: 'white', cursor: 'pointer', fontWeight: 700, color: 'var(--primary)', fontSize: 18 }}
+                          disabled={passengers[t.key as keyof typeof passengers] >= 9}>+</button>
                       </div>
                     </div>
                   ))}
@@ -93,7 +107,7 @@ export default function Home() {
               )}
             </div>
             <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <button className="btn btn-primary btn-lg btn-block" onClick={search}>🔍 Найти</button>
+              <button className="btn btn-primary btn-lg btn-block" onClick={search}>🔍 Найти билеты</button>
             </div>
           </div>
         </div>

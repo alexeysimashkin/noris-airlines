@@ -14,7 +14,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       passengers,
       bookingCode,
       totalPrice,
-      status
+      status,
+      departureDate
     } = req.body
 
     const booking = await prisma.booking.create({
@@ -23,11 +24,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         flightId: Number(flightId),
         tariffId: Number(tariffId),
         totalPrice: Number(totalPrice),
-        status: status || 'confirmed'
+        status: status || 'confirmed',
+        createdAt: departureDate ? new Date(departureDate) : new Date()
       }
     })
 
-    // Если есть пассажиры, создаем их
     if (passengers) {
       const passengerData = JSON.parse(passengers)
       for (const p of passengerData) {
@@ -53,14 +54,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // Если есть места
     if (seats) {
       const seatList = seats.split(',').filter(Boolean)
       for (const seat of seatList) {
         await prisma.bookingSeat.create({
           data: {
             bookingId: booking.id,
-            passengerId: 1, // Упрощенно
+            passengerId: 1,
             seatNumber: seat,
             price: seat.startsWith('1') || seat.startsWith('2') ? 0 : 700
           }
